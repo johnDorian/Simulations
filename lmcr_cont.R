@@ -13,6 +13,8 @@
 ### TODO: Have to make the script from various scripts in the past. ############
 ################################################################################
 
+###GET SOME USEFUL FUNCTIONS OUT OF THE WAY.
+
 ## Let's universalise plotting on all Oprating Systems.
 win.graph = function(){if(.Platform$OS=='unix') x11() else win.graph()=x11()}
 ## Set the working directory.
