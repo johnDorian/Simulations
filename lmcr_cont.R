@@ -4,7 +4,7 @@
 ### Title: LMCR_CONT.R #########################################################
 ### Author: Jason Lessels j.lessels@usyd.edu.au ################################
 ### Created: Wed Jan 27 14:15:45 2010 ##########################################
-### Modified: Wed Jan 27 14:15:45 2010 #########################################
+### Modified: Wed Feb  3 15:42:16 2010 #########################################
 ### Aim: To use the geoR and the gstat packages to fit a variogram #############
 ### Description: This script will use geoR-lifit fn. for guidence. #############
 ################################################################################
@@ -53,72 +53,79 @@ data.log$FLOW <- log(data$FLOW)
 data.bc <- data
 data.bc$TP <- bct(data$TP,TP.lambda$lambda)
 data.bc$FLOW <- bct(data$FLOW,FLOW.lambda$lambda)
+
+
+###########################################
+####### Prelimanary Investigation #########
+## Only needed to look at indivual varios #
+## Does not change fitted models using likfit instead of fit.lmc
+## Uncomment to run. Warning: likfit does need some time.
+###########################################
 ## Create 4 geodata objects one four each variable and transformation.
-qual.tp.log<-as.geodata(data.log,coords.col=1:2,data.col=3)
-qual.flow.log<-as.geodata(data.log,coords.col=1:2,data.col=4)
-qual.tp.bc<-as.geodata(data.bc,coords.col=1:2,data.col=3)
-qual.flow.bc<-as.geodata(data.bc,coords.col=1:2,data.col=4)
-## Perform likfit on each different variable
-log.tp.likfit <- likfit(qual.tp.log,ini=c(0.5,0.5),lik.method="REML")
-log.flow.likfit <- likfit(qual.flow.log,ini=c(0.5,0.5),lik.method="REML")
-bc.tp.likfit <- likfit(qual.tp.bc,ini=c(0.5,0.5),lik.method="REML")
-bc.flow.likfit <- likfit(qual.flow.bc,ini=c(0.5,0.5),lik.method="REML")
-## Have a look at the summaries of all the likfit models.
-summary(log.tp.likfit)
-summary(log.tp.likfit)
-summary(bc.flow.likfit)
-summary(bc.flow.likfit)
+#qual.tp.log<-as.geodata(data.log,coords.col=1:2,data.col=3)
+#qual.flow.log<-as.geodata(data.log,coords.col=1:2,data.col=4)
+#qual.tp.bc<-as.geodata(data.bc,coords.col=1:2,data.col=3)
+#qual.flow.bc<-as.geodata(data.bc,coords.col=1:2,data.col=4)
 
+## Perform likfit on each different variable 
+#log.tp.likfit <- likfit(qual.tp.log,ini=c(0.5,0.5),lik.method="REML") 
+#log.flow.likfit <- likfit(qual.flow.log,ini=c(0.5,0.5),lik.method="REML")
+#bc.tp.likfit <- likfit(qual.tp.bc,ini=c(0.5,0.5),lik.method="REML")
+#bc.flow.likfit <- likfit(qual.flow.bc,ini=c(0.5,0.5),lik.method="REML")
 ## Rip the psill from the likfits
-log.tp.psill <- summary(log.tp.likfit)$spatial.component[[2]][1]
-log.flow.psill <- summary(log.flow.likfit)$spatial.component[[2]][1]
-bc.tp.psill <- summary(bc.tp.likfit)$spatial.component[[2]][1]
-bc.flow.psill <- summary(bc.flow.likfit)$spatial.component[[2]][1]
-
+#log.tp.psill <- summary(log.tp.likfit)$spatial.component[[2]][1]
+#log.flow.psill <- summary(log.flow.likfit)$spatial.component[[2]][1]
+#bc.tp.psill <- summary(bc.tp.likfit)$spatial.component[[2]][1]
+#bc.flow.psill <- summary(bc.flow.likfit)$spatial.component[[2]][1]
 ## Rip the nuggets from the likfits
-log.tp.nug <- summary(log.tp.likfit)$nugget.component[[2]]
-log.flow.nug <- summary(log.flow.likfit)$nugget.component[[2]]
-bc.tp.nug <- summary(bc.tp.likfit)$nugget.component[[2]]
-bc.flow.nug <- summary(bc.flow.likfit)$nugget.component[[2]]
-
-
+#log.tp.nug <- summary(log.tp.likfit)$nugget.component[[2]]
+#log.flow.nug <- summary(log.flow.likfit)$nugget.component[[2]]
+#bc.tp.nug <- summary(bc.tp.likfit)$nugget.component[[2]]
+#bc.flow.nug <- summary(bc.flow.likfit)$nugget.component[[2]]
 ## Rip the range values from the likfits
-log.tp.range <- summary(log.tp.likfit)$practicalRange
-log.flow.range <- summary(log.flow.likfit)$practicalRange
-bc.tp.range <- summary(bc.tp.likfit)$practicalRange
-bc.flow.range <- summary(bc.flow.likfit)$practicalRange
+#log.tp.range <- summary(log.tp.likfit)$practicalRange
+#log.flow.range <- summary(log.flow.likfit)$practicalRange
+#bc.tp.range <- summary(bc.tp.likfit)$practicalRange
+#bc.flow.range <- summary(bc.flow.likfit)$practicalRange
 
 
-## Use the above results of the likfit to run the lmcr code.
+##Create gstat objects
 log.spdf <- SpatialPointsDataFrame(data.log[,1:2],data.log)
 bc.spdf <- SpatialPointsDataFrame(data.bc[,1:2],data.bc)
-#Calculate the experimental auto-semivariogram
-log.tp.vgm <- variogram(log.spdf$TP~1,log.spdf,cutoff=200,width=200/20)
-log.flow.vgm <- variogram(log.spdf$FLOW~1,log.spdf,cutoff=200,width=200/20)
-bc.tp.vgm <- variogram(bc.spdf$TP~1,bc.spdf,cutoff=200,width=200/20)
-bc.flow.vgm <- variogram(bc.spdf$FLOW~1,bc.spdf,cutoff=200,width=200/20)
+################################################
+####### More Prelimanary Investigation #########
+## Only needed to look at indivual varios #
+## This time it's using gstat for the variogram fitting.
+## Uncomment to run. Warning: This still need the likfit function for the model fitting.
+###########################################
 
-## 
-win.graph()
-par(mfrow=c(2,2))
-plot(log.tp.vgm[,2],log.tp.vgm[,3])
-plot(log.flow.vgm[,2],log.flow.vgm[,3])
-plot(bc.tp.vgm[,2],bc.tp.vgm[,3])
-plot(bc.flow.vgm[,2],bc.flow.vgm[,3])
+##Calculate the experimental auto-semivariogram
+#log.tp.vgm <- variogram(log.spdf$TP~1,log.spdf,cutoff=200,width=200/20)
+#log.flow.vgm <- variogram(log.spdf$FLOW~1,log.spdf,cutoff=200,width=200/20)
+#bc.tp.vgm <- variogram(bc.spdf$TP~1,bc.spdf,cutoff=200,width=200/20)
+#bc.flow.vgm <- variogram(bc.spdf$FLOW~1,bc.spdf,cutoff=200,width=200/20)
 
-##
-log.tp.fit <- fit.variogram(log.tp.vgm,model=vgm(log.tp.psill,"Sph",log.tp.range,log.tp.nug))
-log.flow.fit <- fit.variogram(log.flow.vgm,model=vgm(log.flow.psill,"Sph",log.flow.range,log.flow.nug))
-bc.tp.fit <- fit.variogram(bc.tp.vgm,model=vgm(bc.tp.psill,"Sph",bc.flow.range,bc.tp.nug))
-bc.flow.fit <- fit.variogram(bc.flow.vgm,model=vgm(bc.flow.psill,"Sph",bc.flow.range,bc.flow.nug))
+##Plot the variograms.
+#win.graph()
+#par(mfrow=c(2,2))
+#plot(log.tp.vgm[,2],log.tp.vgm[,3])
+#plot(log.flow.vgm[,2],log.flow.vgm[,3])
+#plot(bc.tp.vgm[,2],bc.tp.vgm[,3])
+#plot(bc.flow.vgm[,2],bc.flow.vgm[,3])
 
-win.graph()
-par(mfrow=c(2,2))
+## Fit the variogram models using the results from the likfit above.
+#log.tp.fit <- fit.variogram(log.tp.vgm,model=vgm(log.tp.psill,"Sph",log.tp.range,log.tp.nug))
+#log.flow.fit <- fit.variogram(log.flow.vgm,model=vgm(log.flow.psill,"Sph",log.flow.range,log.flow.nug))
+#bc.tp.fit <- fit.variogram(bc.tp.vgm,model=vgm(bc.tp.psill,"Sph",bc.flow.range,bc.tp.nug))
+#bc.flow.fit <- fit.variogram(bc.flow.vgm,model=vgm(bc.flow.psill,"Sph",bc.flow.range,bc.flow.nug))
 
-plot(log.tp.vgm,log.tp.fit)
-plot(log.flow.vgm,log.flow.fit)
-plot(bc.tp.vgm,bc.tp.fit)
-plot(bc.flow.vgm,bc.flow.fit)
+##Plot the fitted models
+#win.graph()
+#par(mfrow=c(2,2))
+#plot(log.tp.vgm,log.tp.fit)
+#plot(log.flow.vgm,log.flow.fit)
+#plot(bc.tp.vgm,bc.tp.fit)
+#plot(bc.flow.vgm,bc.flow.fit)
 
 ###MODELLING LINEAR MODEL OF COERGIONALISATION
 ## Completed in two sections - one for log and the second for boxcox.
@@ -131,22 +138,22 @@ g.bc = gstat(NULL, "TP", bc.spdf$TP ~ 1, bc.spdf)
 g.log = gstat(g.log, "FLOW", log.spdf$FLOW ~ 1, log.spdf)
 g.bc = gstat(g.bc, "FLOW", bc.spdf$FLOW ~ 1, bc.spdf)
 ## Calculates auto and cross-semivariograms
-v.log = variogram(g.log,cutoff=200,width=200/20)
+v.log = variogram(g.log,cutoff=200,width=200/20) #cutoff and width are arbituray values to make the plots look nice.
 v.bc = variogram(g.bc,cutoff=200,width=200/20)
+
+
+
 ## Calcuate the cross-semivariogram clouds for geoR.
-v.log.cloud = variogram(g.log,cutoff=200,width=200/20,cloud=TRUE)
-v.bc.cloud = variogram(g.log,cutoff=200,width=200/20,cloud=TRUE)
+v.log.cloud = variogram(g.log,cloud=TRUE) 
+v.bc.cloud = variogram(g.log,cloud=TRUE)
 plot(v.log)
 plot(v.bc)
-## Defines form of LMCR - range, variogram model
-g.log = gstat(g.log, model = vgm(1, "Sph", 3000, 1), fill.all = TRUE)
-g.bc = gstat(g.bc, model = vgm(1, "Sph", 3000, 1), fill.all = TRUE)
 ## Subset the variograms just for TP.FLOW values
 v.log.cloud<-subset(v.log.cloud,v.log.cloud$id=="TP.FLOW")
 v.bc.cloud<-subset(v.bc.cloud,v.bc.cloud$id=="TP.FLOW")
 ## Create dummy variograms in the geoR package.
-dummy.log<-variog(qual.tp.log,estimator.type="classical",max.dist=200,option=c("cloud"))
-dummy.bc<-variog(qual.tp.bc,estimator.type="classical",max.dist=200,option=c("cloud"))
+dummy.log<-variog(qual.tp.log,estimator.type="classical",option=c("cloud"))
+dummy.bc<-variog(qual.tp.bc,estimator.type="classical",option=c("cloud"))
 ## Replace the dummy values with that of the cross semivariograms
 dummy.log$u<-v.log.cloud$dist
 dummy.log$v<-v.log.cloud$gamma
@@ -155,41 +162,84 @@ dummy.bc$u<-v.bc.cloud$dist
 dummy.bc$v<-v.bc.cloud$gamma
 
 ## Use variofit in the geoR package to fit the semivariogram models
-log<-variofit(dummy.log,ini=c(0.5,0.5),cov.model="sph", fix.nugget=F,max.dist=200)
-bc<-variofit(dummy.bc,ini=c(0.5,0.5),cov.model="sph", fix.nugget=F,max.dist=200)
+log<-variofit(dummy.log,ini=c(0.5,0.5),cov.model="spherical", fix.nugget=F,max.dist=200,minimisation.function="nls")
+bc<-variofit(dummy.bc,ini=c(0.5,0.5),cov.model="spherical", fix.nugget=F,max.dist=200,minimisation.function="nls")
 ## Now uing the values fitted in the geoR model set the vgm() in the gstat() function.
 g.log = gstat(g.log, model = vgm(summary(log)$spatial.component[[1]][1], "Sph", log$practicalRange, log$nugget), fill.all = TRUE)
 
 g.bc = gstat(g.bc, model = vgm(summary(bc)$spatial.component[[1]][1], "Sph", bc$practicalRange, bc$nugget), fill.all = TRUE)
 
 ## Fits the LMCR models
-g.log.fit = fit.lmc(v.log, g.log)
-g.bc.fit = fit.lmc(v.bc, g.bc)
+g.log.fit = fit.lmc(v.log, g.log,fit.sills=TRUE,fit.ranges=TRUE,fit.lmc=FALSE,fit.method=7)
+g.bc.fit = fit.lmc(v.bc, g.bc,fit.sills=TRUE,fit.ranges=TRUE,fit.lmc=TRUE,fit.method=7)
+## Now plot them to have a look at the result
+plot(v.log, g.log.fit, main="log transformed LMCR")
+win.graph()
+plot(v.bc, g.bc.fit,main="Boxcox transformed LMCR")
+
+detter <- function(object){
+tpn <- object$model$TP$psill[1]
+fln <- object$model$FLOW$psill[1]
+tpfln <- object$model$TP.FLOW$psill[1]
+d <- matrix(c(tpn,tpfln,tpfln,fln),c(2,2))
+hello <- det(d)
+if(det(d)==0)
+  print("YES it equals 0")
+else
+  print("NO it doesn't equal 0 it equals: ");print(hello)
+}
+g.bc.fit
+
+
+####Try again different way. using reml for everything
+## Creates a dataset for auto-semivariogram estimation
+g = gstat(NULL, "TP", log.spdf$TP ~ 1, log.spdf)
+g = gstat(g, "FLOW", log.spdf$FLOW ~ 1, log.spdf)
+g = gstat(g,id="TP",model=vgm(log.tp.psill,"Sph",log.tp.range,log.tp.nug))
+g = gstat(g,id="FLOW",model=vgm(log.flow.psill,"Sph",log.flow.range,log.flow.nug))
+g = gstat(g,id=c("TP","FLOW"),model=vgm(summary(log)$spatial.component[[1]][1], "Sph", log$practicalRange, log$nugget))
+v = variogram(g,cutoff=200,width=200/20)
+g.fit = fit.lmc(v, g,fit.ranges=TRUE,fit.method=6)
+detter(g.fit)
+g.fit
+g.fitplot(v, g.fit, main="log transformed LMCR")
+## Somehow links b1 with b0 so it knows cross-semivariograms are needed
+
+## Calculates auto and cross-semivariograms
+v.log = variogram(g.log,cutoff=200,width=200/20)
+v.bc = variogram(g.bc,cutoff=200,width=200/20)
+## Calcuate the cross-semivariogram clouds for geoR.
+v.log.cloud = variogram(g.log,cloud=TRUE)
+v.bc.cloud = variogram(g.log,cloud=TRUE)
+plot(v.log)
+plot(v.bc)
+## Subset the variograms just for TP.FLOW values
+v.log.cloud<-subset(v.log.cloud,v.log.cloud$id=="TP")
+v.bc.cloud<-subset(v.bc.cloud,v.bc.cloud$id=="TP.FLOW")
+## Create dummy variograms in the geoR package.
+dummy.log<-variog(qual.tp.log,estimator.type="classical",option=c("cloud"))
+dummy.bc<-variog(qual.tp.bc,estimator.type="classical",option=c("cloud"))
+## Replace the dummy values with that of the cross semivariograms
+dummy.log$u<-v.log.cloud$dist
+dummy.log$v<-v.log.cloud$gamma
+
+dummy.bc$u<-v.bc.cloud$dist
+dummy.bc$v<-v.bc.cloud$gamma
+
+## Use variofit in the geoR package to fit the semivariogram models
+log<-variofit(dummy.log,ini=c(0.5,0.5),cov.model="spherical", fix.nugget=F,max.dist=200,minimisation.function="nls")
+bc<-variofit(dummy.bc,ini=c(0.5,0.5),cov.model="spherical", fix.nugget=F,max.dist=200,minimisation.function="nls")
+## Now uing the values fitted in the geoR model set the vgm() in the gstat() function.
+g.log = gstat(g.log, model = vgm(summary(log)$spatial.component[[1]][1], "Sph", log$practicalRange, log$nugget), fill.all = TRUE)
+
+g.bc = gstat(g.bc, model = vgm(summary(bc)$spatial.component[[1]][1], "Sph", bc$practicalRange, bc$nugget), fill.all = TRUE)
+
+## Fits the LMCR models
+g.log.fit = fit.lmc(v.log, g.log,fit.sills=TRUE,fit.ranges=TRUE,fit.lmc=TRUE,fit.method=7)
+g.bc.fit = fit.lmc(v.bc, g.bc,fit.sills=TRUE,fit.ranges=TRUE,fit.lmc=TRUE,fit.method=7)
 ## Now plot them to have a look at the result
 plot(v.log, g.log.fit, main="log transformed LMCR")
 win.graph()
 plot(v.bc, g.bc.fit,main="Boxcox transformed LMCR")
 g.log.fit
-#data:
-#TP : formula = log.spdf$TP`~`1 ; data dim = 461 x 4
-#FLOW : formula = log.spdf$FLOW`~`1 ; data dim = 461 x 4
-#variograms:
-#           model     psill    range
-#TP[1]        Nug 0.2508796  0.00000
-#TP[2]        Sph 0.4938174 49.65972
-#FLOW[1]      Nug 0.5856350  0.00000
-#FLOW[2]      Sph 3.5357701 49.65972
-#TP.FLOW[1]   Nug 0.1957239  0.00000
-#TP.FLOW[2]   Sph 0.9019855 49.65972
 g.bc.fit
-#data:
-#TP : formula = bc.spdf$TP`~`1 ; data dim = 461 x 4
-#FLOW : formula = bc.spdf$FLOW`~`1 ; data dim = 461 x 4
-#variograms:
-#           model        psill    range
-#TP[1]        Nug 1.718051e-04  0.00000
-#TP[2]        Sph 7.714721e-04 49.65972
-#FLOW[1]      Nug 4.172702e+02  0.00000
-#FLOW[2]      Sph 1.461639e+03 49.65972
-#TP.FLOW[1]   Nug 1.199014e-01  0.00000
-#TP.FLOW[2]   Sph 7.642805e-01 49.65972
