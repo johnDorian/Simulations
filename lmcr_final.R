@@ -87,11 +87,12 @@ qual.flow.log<-as.geodata(data.log,coords.col=1:2,data.col=4)
 qual.tp.bc<-as.geodata(data.bc,coords.col=1:2,data.col=3)
 qual.flow.bc<-as.geodata(data.bc,coords.col=1:2,data.col=4)
 
-## Perform likfit on each different variable. Very time consuming.
-log.tp.likfit <- likfit(qual.tp.log,ini=c(0.5,0.5),lik.method="REML") 
-log.flow.likfit <- likfit(qual.flow.log,ini=c(0.5,0.5),lik.method="REML")
-bc.tp.likfit <- likfit(qual.tp.bc,ini=c(0.5,0.5),lik.method="REML")
-bc.flow.likfit <- likfit(qual.flow.bc,ini=c(0.5,0.5),lik.method="REML")
+## Perform likfit on each different variable. Very time consuming so now just load the Rdata file with the results of the likfits.
+#log.tp.likfit <- likfit(qual.tp.log,ini=c(0.5,0.5),lik.method="REML") 
+#log.flow.likfit <- likfit(qual.flow.log,ini=c(0.5,0.5),lik.method="REML")
+#bc.tp.likfit <- likfit(qual.tp.bc,ini=c(0.5,0.5),lik.method="REML")
+#bc.flow.likfit <- likfit(qual.flow.bc,ini=c(0.5,0.5),lik.method="REML")
+load("likfit.Rdata")
 ## Rip the psill from the likfits
 log.tp.psill <- summary(log.tp.likfit)$spatial.component[[2]][1]
 log.flow.psill <- summary(log.flow.likfit)$spatial.component[[2]][1]
@@ -124,21 +125,21 @@ v.bc = variogram(g.bc,cutoff=200,width=200/20)
 
 ### STEP 1. Create A gstat object with TP and flow.
 ##The log transformed dataset
-g.log = gstat(NULL, "TP", log.spdf$TP ~ 1, log.spdf)
-g.log = gstat(g.log, "FLOW", log.spdf$FLOW ~ 1, log.spdf)
+g.log = gstat(NULL, "TP", log.spdf$TP ~ 1, log.spdf,,maxdist=200)
+g.log = gstat(g.log, "FLOW", log.spdf$FLOW ~ 1, log.spdf,maxdist=200)
 ##The box.cox transformed dataset
-g.bc = gstat(NULL, "TP", bc.spdf$TP ~ 1, bc.spdf)
-g.bc = gstat(g.bc, "FLOW", bc.spdf$FLOW ~ 1, bc.spdf)
+g.bc = gstat(NULL, "TP", bc.spdf$TP ~ 1, bc.spdf,,maxdist=200)
+g.bc = gstat(g.bc, "FLOW", bc.spdf$FLOW ~ 1, bc.spdf,maxdist=200)
 
 
-
+model=vgm(summary(log)$spatial.component[[1]][1], "Sph", log$practicalRange, log$nugget)
 ### STEP 2. Add the three vgm components determined using likfit.
 ##The logged transformed dataset (fill.all will overwrite the vgm settigs for all variograms)
-g.log = gstat(g.log,id="TP",model=vgm(log.tp.psill,"Sph",log.tp.range,log.tp.nug))
-g.log = gstat(g.log,id="FLOW",model=vgm(log.flow.psill,"Sph",log.flow.range,log.flow.nug))
+g.log = gstat(g.log,id="TP",model=vgm(log.tp.psill,"Sph",log.tp.range,log.tp.nug),maxdist=200)
+g.log = gstat(g.log,id="FLOW",model=vgm(log.flow.psill,"Sph",log.flow.range,log.flow.nug),maxdist=200)
 ##The box.cox transformed dataset (fill.all will overwrite the vgm settigs for all variograms)
-g.bc = gstat(g.bc,id="TP",model=vgm(bc.tp.psill,"Sph",bc.tp.range,bc.tp.nug))
-g.bc = gstat(g.bc,id="FLOW",model=vgm(bc.flow.psill,"Sph",bc.flow.range,bc.flow.nug))
+g.bc = gstat(g.bc,id="TP",model=vgm(bc.tp.psill,"Sph",bc.tp.range,bc.tp.nug),maxdist=200)
+g.bc = gstat(g.bc,id="FLOW",model=vgm(bc.flow.psill,"Sph",bc.flow.range,bc.flow.nug),maxdist=200)
 
 ##################################################
 ### The next few steps are designed to use the ###
@@ -163,18 +164,22 @@ dummy.var2$v<-v.bc.cloud$gamma
 ## Use geoR's variofit to fit a variogram model to the cross-variogram
 ## (doesn't need to be great) as these are just initial values for the
 ## vgm component of the final gstat objects.
-log<-variofit(dummy.var1,ini=c(0.5,0.5),cov.model="spherical", fix.nugget=F,max.dist=200,minimisation.function="nls")
-bc<-variofit(dummy.var2,ini=c(0.5,0.5),cov.model="spherical", fix.nugget=F,max.dist=200,minimisation.function="nls")
+log<-variofit(dummy.var1,ini=c(0.5,0.5),cov.model="spherical",fix.nugget=F,max.dist=200,minimisation.function="nls")
+bc<-variofit(dummy.var2,ini=c(0.5,27),cov.model="spherical", fix.nugget=F,minimisation.function="nls",weights="equal")
+
+
+
+test<-fit.variogram(v.log.cloud)
 
 ##########################################
 ##########################################
 ########## BACK TO THE FITTING. ##########
 ##########################################
 ##########################################
-g.log = gstat(g.log,id=c("TP","FLOW"),model=vgm(summary(log)$spatial.component[[1]][1], "Sph", log$practicalRange, log$nugget))
-g.log.fill.all = gstat(g.log,id=c("TP","FLOW"),model=vgm(summary(log)$spatial.component[[1]][1], "Sph", log$practicalRange, log$nugget),fill.all=TRUE)
-g.bc = gstat(g.bc,id=c("TP","FLOW"),model=vgm(summary(bc)$spatial.component[[1]][1], "Sph", bc$practicalRange, bc$nugget))
-g.bc.fill.all = gstat(g.bc,id=c("TP","FLOW"),model=vgm(summary(bc)$spatial.component[[1]][1], "Sph", bc$practicalRange, bc$nugget),fill.all=TRUE)
+g.log = gstat(g.log,id=c("TP","FLOW"),maxdist=200,model=vgm(summary(log)$spatial.component[[1]][1], "Sph", log$practicalRange, log$nugget))
+g.log.fill.all = gstat(g.log,id=c("TP","FLOW"),model=vgm(summary(log)$spatial.component[[1]][1], "Sph", log$practicalRange, log$nugget),fill.all=TRUE,,maxdist=200)
+g.bc = gstat(g.bc,id=c("TP","FLOW"),model=vgm(summary(bc)$spatial.component[[1]][1], "Sph", bc$practicalRange, bc$nugget),,maxdist=200)
+g.bc.fill.all = gstat(g.bc,id=c("TP","FLOW"),model=vgm(summary(bc)$spatial.component[[1]][1], "Sph", bc$practicalRange, bc$nugget),fill.all=TRUE,,maxdist=200)
 
 ### STEP 3. Create the fits using fit.lmc
 ##The log transformed fits based on all likfit output (fill.all=FALSE)
