@@ -1,2 +1,5 @@
 ######################
-## This repo is designed to store the various R scripts required to perform LMCR's on the water quality data I have and then perform simulations… As I currently have no where elde to put it I have also dropped the newly obtained kalman filtering code.
+## This repo is designed to store the various R scripts required to perform LMCR's on the water quality data I have and then perform simulations… As I currently have no where else to put it I have also dropped the newly obtained kalman filtering code.
+
+
+The latest script that SHOULD be used is lmcr_final.R
