@@ -43,104 +43,51 @@ names(data) <- c("X","Y","TP","FLOW")
 ## Add arbituary value to the data, so we can transform the data.
 data$TP <- data$TP+0.01
 data$FLOW <- data$FLOW+0.01
-## Transform the data using two methods (natural log) and boxcox
-data.log <- data
-data.log$TP <- log(data$TP)
-data.log$FLOW <- log(data$FLOW)
 ## Determine the correct lambda values for the transformations of both TP and Flow
 TP.lambda <- boxcox.fit(data$TP)
 FLOW.lambda <- boxcox.fit(data$FLOW)
-data.bc <- data
-data.bc$TP <- bct(data$TP,TP.lambda$lambda)
-data.bc$FLOW <- bct(data$FLOW,FLOW.lambda$lambda)
+data <- data
+data$TP <- bct(data$TP,TP.lambda$lambda)
+data$FLOW <- bct(data$FLOW,FLOW.lambda$lambda)
 
-
-
-
-
-
-##################################################
-### Finally we can fit the LMCR. There is thr- ###
-### ee steps in this process. These three ste- ###
-### ps are performed for both transformations. ###
-##################################################
 ##Create gstat objects of the data
-log.spdf <- SpatialPointsDataFrame(data.log[,1:2],data.log)
-bc.spdf <- SpatialPointsDataFrame(data.bc[,1:2],data.bc)
+spdf <- SpatialPointsDataFrame(data[,1:2],data)
 
 ### STEP 1. Create A gstat object with TP and flow.
-##The log transformed dataset
-g.log = gstat(NULL, "TP", log.spdf$TP ~ 1, log.spdf,,maxdist=200)
-g.log = gstat(g.log, "FLOW", log.spdf$FLOW ~ 1, log.spdf,maxdist=200)
-##The box.cox transformed dataset
-g.bc = gstat(NULL, "TP", bc.spdf$TP ~ 1, bc.spdf,,maxdist=200)
-g.bc = gstat(g.bc, "FLOW", bc.spdf$FLOW ~ 1, bc.spdf,maxdist=200)
-#Use likfit to estimate the variable of the variogram models. (This has been done and is in earlier versions of this code, but the data file is quicker to use.)
-load("likfit.Rdata")
-#variogram models
-log.tp.vgm=vgm(log.tp.psill,"Mat",log.tp.range,log.tp.nug)
-log.flow.vgm=vgm(log.flow.psill,"Mat",log.flow.range,log.flow.nug)
-bc.tp.vgm=vgm(bc.tp.psill,"Mat",bc.tp.range,bc.tp.nug)
-bc.flow.vgm=vgm(bc.flow.psill,"Mat",bc.flow.range,bc.flow.nug)
-##The logged transformed dataset (fill.all will overwrite the vgm settigs for all variograms anyway but just incase)
-g.log = gstat(g.log,id="TP",model=log.tp.vgm,maxdist=200)
-g.log = gstat(g.log,id="FLOW",model=log.flow.vgm,maxdist=200)
-##The box.cox transformed dataset (fill.all will overwrite the vgm settigs for all variograms)
-g.bc = gstat(g.bc,id="TP",model=bc.tp.vgm,maxdist=200)
-g.bc = gstat(g.bc,id="FLOW",model=bc.flow.vgm,maxdist=200)
-## Calculates auto and cross-semivariograms (for plotting against the fitted model).
-v.log = variogram(g.log,cutoff=200,width=200/20)
-v.bc = variogram(g.bc,cutoff=200,width=200/20)
-##################################################
-### The next few steps are designed to use the ###
-### geoR function (variofit) to fit a variogr- ###
-### am model to the cross-variogram. This isn- ###
-### 't nessarcy, but makes things easier.      ###
-##################################################
-## Create 4 geodata objects one four each variable and transformation.
-qual.tp.log<-as.geodata(data.log,coords.col=1:2,data.col=3)
-qual.flow.log<-as.geodata(data.log,coords.col=1:2,data.col=4)
-qual.tp.bc<-as.geodata(data.bc,coords.col=1:2,data.col=3)
-qual.flow.bc<-as.geodata(data.bc,coords.col=1:2,data.col=4)
-## Calcuate the cross-semivariogram clouds for geoR.
-v.log.cloud = variogram(g.log,cloud=TRUE)
-v.bc.cloud = variogram(g.bc,cloud=TRUE)
+g = gstat(NULL, "TP", bc.spdf$TP ~ 1, bc.spdf,,maxdist=200)
+g = gstat(g, "FLOW", bc.spdf$FLOW ~ 1, bc.spdf,maxdist=200)
 
-## Create a dummy geodata object
-dummy.geodata<-as.geodata(data.log,coords.col=1:2,data.col=3)
-## Create a dummy variog object using dummy values (one for log and one for flow)
-dummy.var1<-variog(qual.tp.log,estimator.type="classical",option=c("cloud"))
-dummy.var2<-variog(qual.tp.bc,estimator.type="classical",option=c("cloud"))
-## Replace the dummy values with the cross-variogram values
-dummy.var1$u<-v.log.cloud$dist
-dummy.var1$v<-v.log.cloud$gamma
-dummy.var2$u<-v.bc.cloud$dist
-dummy.var2$v<-v.bc.cloud$gamma
-## Use geoR's variofit to fit a variogram model to the cross-variogram
-## (doesn't need to be great) as these are just initial values for the
-## vgm component of the final gstat objects.
-log<-variofit(dummy.var1,ini=c(0.5,0.5),cov.model="matern",fix.nugget=F,minimisation.function="nls",weights="equal")
-bc<-variofit(dummy.var2,ini=c(0.5,27),cov.model="matern", fix.nugget=F,minimisation.function="nls",weights="equal")
-##############################
+### STEP 2. Create intial values for the models.
+#Create variogarms for plotting.
+v = variogram(g.bc,cutoff=200,width=200/20)
+#Plot the cross covariogram and get some initial values for it.
+plot(v,g)
+#The cross covariance models using initial values, these will change.
+g = gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Sph",48,0.2),fill.all=TRUE)
 
-###Create a vgm using the variogram cloud values.
-log.vgm <- vgm(summary(log)$spatial.component[[1]][1], "Mat", log$practicalRange, log$nugget)
-bc.vgm <- vgm(summary(bc)$spatial.component[[1]][1], "Mat", bc$practicalRange, bc$nugget)
-#The cross covariance models
-g.log = gstat(g.log,id=c("TP","FLOW"),maxdist=200,model=log.vgm,fill.all=TRUE)
-g.bc = gstat(g.bc,id=c("TP","FLOW"),model=bc.vgm,fill.all=TRUE)
+### STEP 3. Find the range of each covariogram using fit.lmc
+##Use fit.lmc() function to find the ranges for each covariogram.
+fit.range=fit.lmc(v,g,fit.lmc=TRUE,fit.ranges=TRUE)
+fit.range
+##Avergae the ranges out and use the average range as the max range.
+range<-mean(fit.range$model$TP[[3]][2],fit.range$model$TP.FLOW[[3]][2],fit.range$model$FLOW[[3]][2])
+g.ave.range = gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Sph",range,0.2),fill.all=TRUE)
+##Create another model using 2 days (48) as the range).
+g.2days.range=gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Sph",48,0.2),fill.all=TRUE)
 
-### STEP 3. Create the fits using fit.lmc
-##The log transformed fits based on all likfit output (fill.all=TRUE)
-log.fit=fit.lmc(v.log,g.log,fit.lmc=TRUE,fit.ranges=FALSE)
-bc.fit=fit.lmc(v.bc,g.bc,fit.lmc=TRUE,fit.ranges=FALSE)
-##Check the determinates of the model
-det.fit(bc.fit)
-det.fit(log.fit)
+### STEP 4. Fit the two final models using fit.lmc()
+fit.ave=fit.lmc(v,g.ave.range,fit.lmc=TRUE,fit.ranges=FALSE)
+fit.2days=fit.lmc(v,g.2days.range,fit.lmc=TRUE,fit.ranges=FALSE)
+##Check the determinates of the model make sure they are positive
+det.fit(fit.ave)
+det.fit(fit.2days)
 ##Plotting the results.
-plot(v.bc,bc.fit,main="boxcox transformation with matern cov model")
+pdf("lmc_with_ave_range.pdf")
+plot(v,fit.ave,main="Average range used for model")
+dev.off()
 win.graph()
-plot(v.bc,bc.fit,main="log transformation with matern cov model")
+pdf("lmc_with_2day_range.pdf")
+plot(v,fit.2days,main="2 day range used for model")
 ##Compare the values for the four best models.
-log.fit
-bc.fit
+fit.ave
+fit.2days
