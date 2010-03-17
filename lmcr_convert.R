@@ -3,7 +3,7 @@
 ### Aim: The aim of this script is to perform lmcr of two variables through time.
 ### Author: Jason Lessels
 ### Date Created: 12/03/2010
-### Last Modified: 15/03/2010
+### Last Modified: 17/03/2010
 ### References: The code is completly based on the work by Thomas Bishop, and is heavily based on the work by Lark.
 ### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user.
 ################################################################################
@@ -33,47 +33,47 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock,c_o
 
 
 ### Final values to delcare - checked off values...
-nolags=3
-nvar=2
-sd=matrix(ncol=2)
-dataf=array(0,c(nvar,nvar,3,500))
+	nolags=3
+	nvar=2
+	sd=matrix(ncol=2)
+	dataf=array(0,c(nvar,nvar,3,500))
 ###Other variables - still unsure about...
-am=matrix(ncol=2)
-c=array(NA,c(3,nvar,nvar))
-dm=array(NA,c(3,nvar,nvar))
+	am=matrix(ncol=2)
+	c=array(NA,c(3,nvar,nvar))
+	dm=array(NA,c(3,nvar,nvar))
 ###declaration finished...
 
 ### first loop 
-index=0
-for(ir in 1:nvar){
-	for(ic in ir:nvar){
-		index=index+1
-		for(ix in 1:nolags){
-			dataf[ir,ic,1,ix]=semvar[ix,1]
+	index=0
+	for(ir in 1:nvar){
+		for(ic in ir:nvar){
+			index=index+1
+			for(ix in 1:nolags){
+				dataf[ir,ic,1,ix]=semvar[ix,1]
 		
-			if(index==1)dataf[ir,ic,2,ix]=semvar[ix,2] 
-				else
-			if(index==2)dataf[ir,ic,2,ix]=semvar[ix,3]
-				else
-			if(index==3)dataf[ir,ic,2,ix]=semvar[ix,4]
-				else
-			if(index==4)dataf[ir,ic,2,ix]=semvar[ix,5]
+				if(index==1)dataf[ir,ic,2,ix]=semvar[ix,2] 
+					else
+				if(index==2)dataf[ir,ic,2,ix]=semvar[ix,3]
+					else
+				if(index==3)dataf[ir,ic,2,ix]=semvar[ix,4]
+					else
+				if(index==4)dataf[ir,ic,2,ix]=semvar[ix,5]
 			
+			}
 		}
 	}
-}
 
-nlags=nolags
+	nlags=nolags
 	
 
 ### Standard deviations of each variable.
-sd[1]=sqrt(covar[1,1])
-sd[2]=sqrt(covar[2,2])
+	sd[1]=sqrt(covar[1,1])
+	sd[2]=sqrt(covar[2,2])
 
 ### Adjust 'AMAX' if necessary.
-amax=maxdist
-if(modtyp==1||modtyp==3||modtyp==4)amax=amax/3
-amax=amax*1.5
+	amax=maxdist
+	if(modtyp==1||modtyp==3||modtyp==4)amax=amax/3
+	amax=amax*1.5
 
 
 
@@ -143,13 +143,13 @@ amax=amax*1.5
 ###	Check guesses for positive-definiteness. 
 	for(istr in 0:nstr){
 		icpo<-check(c,nvar,istr)
-	if(icpo<=0){
-		print("Values for semivariogram are not")
-		print("positive-definite.")
-		print("Try remaking semivariogram with")
-		print("different specifications.")
+		if(icpo<=0){
+			message("")			
+			message("Values for semivariogram are not positive-definite.")
+			message("Try remaking semivariogram with different specifications.")
+			message("")
+		}	
 	}
-		
 ###	Enter the annealing parameters.
 ###	These constrain how much the variogram parameters can change with each iteration.
 	for(i in 1:nstr){
@@ -172,16 +172,16 @@ amax=amax*1.5
 	}
 
 
-for(is in 0:nstr){
-	for(ir in 1:nvar){
-		for(ic in ir:nvar){
-			if(ir==ic)
-				dm[is+1,ir,ic]=covar[ir,ic]*0.25 
-			else
-				dm[is+1,ir,ic]=0.25*(sqrt(covar[ir,ir])*sqrt(covar[ic,ic]))
+	for(is in 0:nstr){
+		for(ir in 1:nvar){
+			for(ic in ir:nvar){
+				if(ir==ic)
+					dm[is+1,ir,ic]=covar[ir,ic]*0.25 
+				else
+					dm[is+1,ir,ic]=0.25*(sqrt(covar[ir,ir])*sqrt(covar[ic,ic]))
+			}
 		}
 	}
-}
 
 
 
@@ -230,7 +230,10 @@ for(is in 0:nstr){
 ###	Iterate cooling step.
 
 	for(ics in 1:2000){
-		if(nunch>=istop){ ###goto 2001}
+		if(nunch>=istop){
+			break
+			temp=1
+		}
 
 		rej=0
 		acc=0
@@ -244,97 +247,107 @@ for(is in 0:nstr){
 			if(lock==0){
 				for(istr in 1:nstr){
 					ao=a[istr]
-###############TODO:TODO:TODO:TODO####################
-##########PLace next section in a while loop.#########
-###1965
+
+					repeat{					
 					r=rnorm(1);while(r>1||r<0){r=rnorm(1)};r
 					rc=(r-0.5)*2.0*am(istr)
 
 ###					Reject inappropriate values.
 					if(modtyp<4){
 						if(modtyp==3&&istr==2){
-							if(ao+rc)<=1||(ao+rc)>=2) {goto 1965}}
-						else{
-							if(ao+rc)<=amin||(ao+rc)>amax) {goto 1965}
+							if(ao+rc)<=1||(ao+rc)>=2)next
+						}else{
+							if(ao+rc)<=amin||(ao+rc)>amax)next
 						}
-					}
+					}else{
 					if(modtyp==4||modtyp==5){
 						if(istr==1){
-							if(ao+rc)<=amin||(ao+rc)>=a[2]){goto 1965}
-						else{
-							if(ao+rc)<=a[1]||(ao+rc)>amax){goto 1965}
+							if(ao+rc)<=amin||(ao+rc)>=a[2])next
+						}else{
+							if(ao+rc)<=a[1]||(ao+rc)>amax)next
 						}
-					}				
+					}else
+						break
+					}
+								
 
 					a[istr]=ao+rc
 					fo=f
 
 					f<-fcn(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt)
 					
-					if(f<=fo){goto 1969}
+					if(f>fo){
 					
-					accrej<-metrop(f,fo,cpar,accrej)
+						accrej<-metrop(f,fo,cpar,accrej)
 					
-					if(accrej<0){
-						rej=rej+1
-						a[istr]=ao
-						f=fo
-						goto 330
-					}
-					
-###1969					acc=acc+1
-###330				}
+						if(accrej<0){
+							rej=rej+1
+							a[istr]=ao
+							f=fo
+							break
+						}
+					}if(accrej<0){break}
+					acc=acc+1	
+			}	
 
 			}
 
 
 ###			Now adjust variances.
 			for(istr in 0:nstr){
-				if(modtyp==3&&istr==2){goto 335}			
+				if(modtyp==3&&istr==2)break			
 				for(ir in 1:nvar){
 					for(ic in ir:nvar){
 						cold=c[istr+1,ir,ic]
-###2065						r=rnorm(1);while(r>1||r<0){r=rnorm(1)};r
-						rc=(r-0.5)*2.0*dm[istr+1,ir,ic]
+						repeat{					
+							r=rnorm(1);while(r>1||r<0){r=rnorm(1)}
+							rc=(r-0.5)*2.0*dm[istr+1,ir,ic]
 
 ###						Reject inappropriate values.
-						if(ir==ic){
-							if((cold+rc)<0){goto 2065}
-						}else{
-							if(icvp==1&&(cold+rc<0){goto 2065}
-								else
-							if(icvp==-1&&(cold+rc)>0){goto2065}
-						}
+							if(ir==ic){
+								if((cold+rc)<0)next
+							}else{
+								if(icvp==1&&(cold+rc<0)next
+									else
+								if(icvp==-1&&(cold+rc)>0)next
+							}
+						
+						
 
 ###						Zero value if less than tolerance.
-						if(abs(cold+rc)>=abs(covar[ir,ic]/1000)) c[istr+1,ir,ic]=cold+rc else c[istr+1,ir,ic]=0
-						c[istr+1,ic,ir]=c[istr+1,ir,ic]
+							if(abs(cold+rc)>=abs(covar[ir,ic]/1000)) c[istr+1,ir,ic]=cold+rc else c[istr+1,ir,ic]=0
+							c[istr+1,ic,ir]=c[istr+1,ir,ic]
 
 
 ###						Check for positive-definiteness.
-						icpo<-check(c,nvar,istr)
-						if(icpo<0){
-							c[istr+1,ir,ic]=cold
-							c[istr+1,ic,ir]=c[istr,ir,ic]
-							goto 2065
+							icpo<-check(c,nvar,istr)
+							if(icpo<0){
+								c[istr+1,ir,ic]=cold
+								c[istr+1,ic,ir]=c[istr,ir,ic]
+								next
+							}
 						}
 
 						if(lock==1)fo=f
 
 						f<-function(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
-						if(f<=fo){goto 2069}
+						for(i in 1:2){						
+							if(f<=fo)break
 
 
-						accrej<-metrop(f,fo,cpar)
+							accrej<-metrop(f,fo,cpar)
 						
-						if(accrej<0){
-							rej=rej+1
-							c[istr+1,ir,ic]=cold
-							c[istr+1,ic,ir]=c[istr+1,ir,ic]
-							f=fo
-							goto 350
+							if(accrej<0){
+								rej=rej+1
+								c[istr+1,ir,ic]=cold
+								c[istr+1,ic,ir]=c[istr+1,ir,ic]
+								f=fo
+								temp=2
+								break
+							}
 						}
-###2069						acc=acc+1
+						if(temp==2)break					
+						acc=acc+1
 
 					}
 				}
@@ -344,40 +357,40 @@ for(is in 0:nstr){
 
 			if(ics==1)paccin=pacc
 		}
-
-		if(fic==f){
-			nunch=nunch+1 
-		}else{
-			nunch=0
-			fic=f
-		}
-
-		if(ics==1){
-		print(c('Proportion of changes accepted in 1st chain:',paccin))
-		print(' ')
-		print('(Between 0.90-0.99 is optimal. If equal to one, reject')
-		print('and decrease the initial temperature. If less than 0.9,')
-		print('reject and increase the initial temperature).')
-		iconto<-as.numeric(readline('To accept press 0, to exit press 1:'))
-		if(iconto==0){
-			print("")
-			print("Minimising weighted sum-of-squares")
-			print("(please be patient)...")
-			print("")
-		}else{
-			if(iconto==1){
-				stop("you accepted the changes")
+		for(i in 1:2){
+			if(temp==1)break
+			if(fic==f){
+				nunch=nunch+1 
+			}else{
+				nunch=0
+				fic=f
 			}
-		}
+
+			if(ics==1){
+				print(c('Proportion of changes accepted in 1st chain:',paccin))
+				print(' ')
+				print('(Between 0.90-0.99 is optimal. If equal to one, reject')
+				print('and decrease the initial temperature. If less than 0.9,')
+				print('reject and increase the initial temperature).')
+				iconto<-as.numeric(readline('To accept press 0, to exit press 1:'))
+				if(iconto==0){
+					print("")
+					print("Minimising weighted sum-of-squares")
+					print("(please be patient)...")
+					print("")
+				}else{
+					if(iconto==1)stop("you accepted the changes")
+				}
+			}
 
 		
-		cpar=cpar*alp
+			cpar=cpar*alp
 
 ###		Parameter 'ics' is the Markov chain number, 'f' is the criterion minimised
 ###		and 'pacc' is how much it has changed since the last time.
-		write(14,*)ics,f,pacc
+			write(14,*)ics,f,pacc
 
-	}
+		}
 
 	
 ###	Write out results.
