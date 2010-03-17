@@ -156,6 +156,8 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 			message("")
 		}	
 	}
+
+
 ###	Enter the annealing parameters.
 ###	These constrain how much the variogram parameters can change with each iteration.
 	for(i in 1:nstr){
@@ -230,7 +232,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 			break
 			temp=1
 		}
-
+#####	NO BRACKETS ARE BROKEN ABOVE THIS LINE
 		rej=0
 		acc=0
 
@@ -264,7 +266,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 							}
 						}else
 							break
-						}
+					}
 								
 
 					a[istr]=ao+rc
