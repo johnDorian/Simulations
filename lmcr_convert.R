@@ -1,14 +1,15 @@
 ################################################################################
-### Title: lmcr using R.
-### Aim: The aim of this script is to perform lmcr of two variables through time.
+### Title: lmcr_convert
+### Aim: The aim of this script is to perform lmcr of two variables through time. 
 ### Author: Jason Lessels
 ### Date Created: 12/03/2010
 ### Last Modified: 17/03/2010
-### References: The code is completly based on the work by Thomas Bishop, and is heavily based on the work by Lark.
+### References: The code is completly based on the work by Thomas Bishop, and is converted from the code of Lark, based on Lark's 2003 paper.
 ### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user.
 ################################################################################
 ### WARNINGS: NO TESTING, NO IDEA IF IT WORKS...
-### TODO: EVERYTHING.
+### TODO: finish off translation, not much more to do. test to see what is wrong with it. Also have to get nvar to automatically determine how many variables exist - but might leave to down the track once everything is up and running. Get the gammah function in here. Another dream would be to get this function to accept the gstat formated cross covariogram. Create a list to wright all the results to here is an example of how to do it.
+###list(WSS=1,fittingParameters=list(init.temp=1,cool.par=3),wei=3)
 ################################################################################
 ###Set the working directory (same as the git repo)
 setwd("~/Documents/code/Simulations")
@@ -29,12 +30,10 @@ setwd("~/Documents/code/Simulations")
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 ###Declare all the variables
-lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock,c_out,a_out,vAIC)
+lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock,c_out,a_out,vAIC)
 
 
 ### Final values to delcare - checked off values...
-	nolags=3
-	nvar=2
 	sd=matrix(ncol=2)
 	dataf=array(0,c(nvar,nvar,3,500))
 ###Other variables - still unsure about...
@@ -193,7 +192,10 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock,c_o
 	nmarkov=60
 	istop=50
 	iwopt=WGT
-
+######################################################
+	f<-fcn(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
+	message('Weighted sum-of-squares of guessed parameters is:',f)
+	message("")
 ###############TODO:TODO:TODO:TODO####################
 ###	Initiate the fitting criterion.
 	call fcn(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt,f)
@@ -367,19 +369,20 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock,c_o
 			}
 
 			if(ics==1){
-				print(c('Proportion of changes accepted in 1st chain:',paccin))
-				print(' ')
-				print('(Between 0.90-0.99 is optimal. If equal to one, reject')
-				print('and decrease the initial temperature. If less than 0.9,')
-				print('reject and increase the initial temperature).')
+				message(' ')
+				message('Proportion of changes accepted in 1st chain: ',paccin)
+				message(' ')
+				message('(Between 0.90-0.99 is optimal. If equal to one, reject')
+				message('and decrease the initial temperature. If less than 0.9,')
+				message('reject and increase the initial temperature).')
 				iconto<-as.numeric(readline('To accept press 0, to exit press 1:'))
 				if(iconto==0){
-					print("")
-					print("Minimising weighted sum-of-squares")
-					print("(please be patient)...")
-					print("")
+					message("")
+					message("Minimising weighted sum-of-squares")
+					message("(please be patient)...")
+					message("")
 				}else{
-					if(iconto==1)stop("you accepted the changes")
+					if(iconto==1)stop(options("show.error.messages"=FALSE))
 				}
 			}
 
