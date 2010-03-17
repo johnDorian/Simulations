@@ -5,11 +5,10 @@
 ### Date Created: 12/03/2010
 ### Last Modified: 17/03/2010
 ### References: The code is completly based on the work by Thomas Bishop, and is converted from the code of Lark, based on Lark's 2003 paper.
-### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user.
+### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user. In the original script most things where written to file 13, everything that was to be written to this file has been written in the list everything else that was to be written else where has been labeled with other.blah
 ################################################################################
 ### WARNINGS: NO TESTING, NO IDEA IF IT WORKS...
-### TODO: finish off translation, not much more to do. test to see what is wrong with it. Also have to get nvar to automatically determine how many variables exist - but might leave to down the track once everything is up and running. Get the gammah function in here. Another dream would be to get this function to accept the gstat formated cross covariogram. Create a list to wright all the results to here is an example of how to do it.
-###list(WSS=1,fittingParameters=list(init.temp=1,cool.par=3),wei=3)
+### TODO: trouble shooting and the gammah function.. that's not that much now is it.
 ################################################################################
 ###Set the working directory (same as the git repo)
 setwd("~/Documents/code/Simulations")
@@ -30,8 +29,15 @@ setwd("~/Documents/code/Simulations")
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 ###Declare all the variables
-lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock,c_out,a_out,vAIC)
+lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock,c_out,a_out,vAIC){
 
+###Create a list to write the results to and return at end of function. - have to declare them as zero as list wont work otherwise.
+	results<-list(WSSGuessedParameter=0,initialTemperature=0,coolingParameter=0,
+	numberTrialMarkovChain=0,numberMarkovChainReturningNoChange=0,
+	weightingOption=0,finalWSS=0,variableAIC=0,effectiveRange1=0,
+	effectiveRange2=0,effectiveRange1stStructure=0,effectiveRange2ndStructure=0,
+	solutionAfter=0,structure=0,distanceParameter=0,ir=0,ic=0,c=0,other.ics=0,
+	other.f=0,other.pacc=0)
 
 ### Final values to delcare - checked off values...
 	sd=matrix(ncol=2)
@@ -40,6 +46,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 	am=matrix(ncol=2)
 	c=array(NA,c(3,nvar,nvar))
 	dm=array(NA,c(3,nvar,nvar))
+	temp=NA
 ###declaration finished...
 
 ### first loop 
@@ -88,7 +95,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 	c[1,2,2]=covar[2,2]*0.25
 
 ###	Nugget of the cross-variogram.
-	c(1,1,2)=covar[1,2]*0.05
+	c[1,1,2]=covar[1,2]*0.05
 
 	if(c[1,1,1]==0||c[1,2,2]==0)c[1,1,2]=0
 
@@ -142,7 +149,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 ###	Check guesses for positive-definiteness. 
 	for(istr in 0:nstr){
 		icpo<-check(c,nvar,istr)
-		if(icpo<=0){
+		if(icpo>=0){
 			message("")			
 			message("Values for semivariogram are not positive-definite.")
 			message("Try remaking semivariogram with different specifications.")
@@ -155,7 +162,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 		if(modtyp==1||modtyp==4){
 			amin=dataf[1,1,1,2]/3
 			if(a[i]<33)am[i]=1 else am[i]=2
-		}
+		}else
 		if(modtyp==2||modtyp==5){
 			amin=dataf[1,1,1,2]
 			if(a[i]<100)am[i]=1 else am[i]=2
@@ -192,30 +199,17 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 	nmarkov=60
 	istop=50
 	iwopt=WGT
-######################################################
+
 	f<-fcn(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
+	message("")
 	message('Weighted sum-of-squares of guessed parameters is:',f)
 	message("")
-###############TODO:TODO:TODO:TODO####################
-###	Initiate the fitting criterion.
-	call fcn(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt,f)
-	print*, 'Weighted sum-of-squares of guessed parameters is:',f
-	PRINT*,' '
-	WRITE(13,*),'WSS of guessed parameters is:',f
-	write(13,*) ' '
-	write(13,*) 'Fitting parameters'
-	write(13,*) ' '
-	write(13,*) 'Initial temperature:',cpar
-	write(13,*) 'Cooling parameter:',alp
-	write(13,*) 'Number of trials in a Markov chain:',nmarkov
-	write(13,*) 'Number of M. chains returning no change to stop:'	
-     :,istop
-55	continue
-	write(13,*) ' '
-	write(13,*) 'Weighting option:',iwopt
-	write(13,*) ' '
-	write(13,*) ' '
-###############TODO:TODO:TODO:TODO####################
+	results$WSSGuessedParameter=f
+	results$initialTemperature=cpar
+	results$coolinParameter=alp
+	reults$numberTrialMarkovChain=nmarkov
+	results$numberMarkovChainReturningNoChange=istop
+	results$weightingOption=iwopt
 
 ###	**************************************************************************************************
 
@@ -251,26 +245,26 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 					ao=a[istr]
 
 					repeat{					
-					r=rnorm(1);while(r>1||r<0){r=rnorm(1)};r
-					rc=(r-0.5)*2.0*am(istr)
+						r=rnorm(1);while(r>1||r<0){r=rnorm(1)}
+						rc=(r-0.5)*2.0*am(istr)
 
 ###					Reject inappropriate values.
-					if(modtyp<4){
-						if(modtyp==3&&istr==2){
-							if(ao+rc)<=1||(ao+rc)>=2)next
+						if(modtyp<4){
+							if(modtyp==3&&istr==2){
+								if((ao+rc)<=1||(ao+rc)>=2)next
+							}else{
+								if((ao+rc)<=amin||(ao+rc)>amax)next
+							}
 						}else{
-							if(ao+rc)<=amin||(ao+rc)>amax)next
+						if(modtyp==4||modtyp==5){
+							if(istr==1){
+								if((ao+rc)<=amin||(ao+rc)>=a[2])next
+							}else{
+								if((ao+rc)<=a[1]||(ao+rc)>amax)next
+							}
+						}else
+							break
 						}
-					}else{
-					if(modtyp==4||modtyp==5){
-						if(istr==1){
-							if(ao+rc)<=amin||(ao+rc)>=a[2])next
-						}else{
-							if(ao+rc)<=a[1]||(ao+rc)>amax)next
-						}
-					}else
-						break
-					}
 								
 
 					a[istr]=ao+rc
@@ -288,9 +282,10 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 							f=fo
 							break
 						}
-					}if(accrej<0){break}
+					}
+					if(accrej<0){break}
 					acc=acc+1	
-			}	
+				}	
 
 			}
 
@@ -309,7 +304,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 							if(ir==ic){
 								if((cold+rc)<0)next
 							}else{
-								if(icvp==1&&(cold+rc<0)next
+								if(icvp==1&&(cold+rc)<0)next
 									else
 								if(icvp==-1&&(cold+rc)>0)next
 							}
@@ -332,7 +327,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 
 						if(lock==1)fo=f
 
-						f<-function(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
+						f<-fcn(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
 						for(i in 1:2){						
 							if(f<=fo)break
 
@@ -385,102 +380,88 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 					if(iconto==1)stop(options("show.error.messages"=FALSE))
 				}
 			}
+		}
 
 		
-			cpar=cpar*alp
+		cpar=cpar*alp
 
 ###		Parameter 'ics' is the Markov chain number, 'f' is the criterion minimised
 ###		and 'pacc' is how much it has changed since the last time.
-			write(14,*)ics,f,pacc
+		results$other.ics=ics
+		results$other.f=f
+		results$other.pacc=pacc
 
-		}
-
-	
-###	Write out results.
-2001	print*,'Solution at:'
-	write(13,*) 'Solution after ',ics-1,' Markov chains at:'
-	
-	Do 100 istr=0,nstr
-		print*, 'Structure ',istr,' (0 denotes the nugget)'
-		write(13,*) 'Structure ',istr,' (0 denotes the nugget)'
-
-		if(istr.gt.0)then
-			print*, 'Distance parameter:',a(istr)
-			write(13,*) 'Distance parameter:',a(istr)
-			A_OUT(ISTR)=DBLE(A(ISTR))
-		endif
-
-		do 110 ir=1,nvar
-			do 120 ic=ir,nvar
-				print*,ir,ic,c(istr,ir,ic)
-				write(13,*)ir,ic,c(istr,ir,ic)
-				C_OUT(istr,ir,ic)=DBLE(c(istr,ir,ic))
-120			continue
-110		continue
-	
-		IF(ISTR==2)EXIT
-
-		print*, ' '
-		print*, ' '
-		write(13,*) ' '
-		write(13,*) ' '
-
-100	continue
-
-	print*, ' '
-	write(13,*) ' '
-
-	print*,'Weighted sum-of-squares of final solution is:',f
-	print*,'************************************************'
-	print*,' '
-
-	write(13,*)'Final WSS:',f
-
-
-C	Overall goodness-of-fit according to Akaike Information Criterion
-C	(Webster & McBratney, 1989).
-	IF(MODTYP==1.OR.MODTYP==2)THEN
-		vAIC=SUM(NLAGS)*LOG(F)+14
-	ENDIF
-	IF(MODTYP==3)THEN
-		vAIC=SUM(NLAGS)*LOG(F)+16
-	ENDIF
-	IF(MODTYP==4.OR.MODTYP==5)THEN
-		vAIC=SUM(NLAGS)*LOG(F)+22
-	ENDIF
-	
-	WRITE(13,*)'Variable portion of Akaike Information Criterion:',vAIC
-	WRITE(13,*)' '
-
-
-C	Effective ranges (if applicable).
-	IF(MODTYP==1.OR.MODTYP==3.OR.MODTYP==4)THEN
-
-		IF(MODTYP==1)THEN
-			WRITE(13,*)'Effective range (m) =',3*A(1)
-		ENDIF
-		IF(MODTYP==3)THEN
-		WRITE(13,*)'Effective range (m) =',(3-((A(2)-1)*1.26795))*A(1)
-		ENDIF
-		IF(MODTYP==4)THEN
-		WRITE(13,*)'Effective range of first structure (m) =',3*A(1)
-		WRITE(13,*)'Effective range of second structure (m) =',3*A(2)
-		ENDIF
-
-		WRITE(13,*)' '
+	}
+############################################
+###	Write out results
+	message('Solotion at: ')
+###Important note: To get the next part to work within the loop and add the results to the list need to first save as data.frame using rbind then convert to the list using as.numeric
+	results$solutionAfter=ics-1
+###	need to create a data.frame here
+	structure=data.frame(val=NA)
+	distance=data.frame(val=NA)
+	d.ir=data.frame(val=NA)
+	d.ic=data.frame(val=NA)
+	d.c=data.frame(val=NA)
+	for(istr in 0:nstr){
+		message("Solution at: ")
+		structure$val=rbind(structure$val,istr)
 		
-	ENDIF
+		if(istr>0){
+			message("Distance parameter: ",a[istr])
+			distance$val=rbind(distance$val,a[istr])
+			a_out[istr]=a[istr]
+		}
+		for(ir in 1:nvar){
+			for(ic in ir:nvar){
+				message(ir,ic,c[istr+1,ir,ic])
+				d.ir$val=rbind(d.ir$val,ir)
+				d.ic$val=rbind(d.ic$val,ic)
+				d.c$val=rbind(d.c$val,c[istr+1,ir,ic])
+				c_out[istr,ir,ic]=c[istr+1,ir,ic]
+			}
+		}
+		if(istr==2)break
+		
+	}
+###My new section to convert the data.frames to the lists.
+	results$structure=as.numeric(structure$val)
+	results$distance=as.numeric(distance$val)
+	results$sir=as.numeric(d.ir$val)
+	results$sic=as.numeric(d.ir$val)
+	results$sc=as.numeric(d.c$val)
 
-	WRITE(13,*)'************************************************'	
+	message("")
+	message("Weighted sum-of-squares of final solution is: ",f)
+	message("")
+	
+	results$finalWSS=f
 
-	DATAF=0
-	A=0
-	C=0
-	ICS=0
+###	Overall goodness-of-fit according to Akaike Information Criterion
+###	(Webster & McBratney, 1989).
+	if(modtyp==1||modtyp==2)vAIC=sum(nlags)*log(f)+14
+	else
+	if(modtyp==3)vAIC=sum(nlags)*log(f)+16
+	else
+	if(modtyp==4||modtyp==5)vAIC=sum(nlags)*log(f)+22
+	results$variableAIC=vAIC
 
-	RETURN
-
-	END SUBROUTINE
+############################################	
+###	Effective ranges (if applicable).
+	if(modtyp==1||modtyp==3||modtyp==4){
+		if(modtyp==1)
+			results$effectiveRange1=3*a[1]
+		else
+		if(modtype==3)
+			results$effectiveRange2=3-((a[2]-1)*1.26795)*a[1]
+		else
+		if(modtyp==4){
+			results$effectiveRange1stStructure=3*a[1]
+			results$effectiveRange1stStructure=3*a[2]
+		}
+	}
+	return(results)
+}
 
 ######################################################################################################
 ######################################################################################################
