@@ -29,8 +29,20 @@ setwd("~/Documents/code/Simulations")
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 ###Declare all the variables
-lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock,c_out,a_out,vAIC){
+lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
+### obtain samvar from lmcr.R script.
+### nolags = 20
+### nvar = 2
+### wgt = ?
+### icvp = 1
+### cparf = ?
+### modtyp = number based on the models suggested in gammah function.
+### covar = 2*2 matrix other than that i dont know.
+### maxdist = 200
+### guessa = ?
+### lock = ? 1 or 0.
 
+### TODO declare a_out and c_out
 ###Create a list to write the results to and return at end of function. - have to declare them as zero as list wont work otherwise.
 	results<-list(WSSGuessedParameter=0,initialTemperature=0,coolingParameter=0,
 	numberTrialMarkovChain=0,numberMarkovChainReturningNoChange=0,
@@ -62,8 +74,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 				if(index==2)dataf[ir,ic,2,ix]=semvar[ix,3]
 					else
 				if(index==3)dataf[ir,ic,2,ix]=semvar[ix,4]
-					else
-				if(index==4)dataf[ir,ic,2,ix]=semvar[ix,5]
+				dataf[ir,ic,2,ix]=semvar[ix,5]
 			
 			}
 		}
@@ -200,7 +211,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 	alp=0.975
 	nmarkov=60
 	istop=50
-	iwopt=WGT
+	iwopt=wgt
 
 	f<-fcn(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
 	message("")
@@ -499,7 +510,7 @@ check<-function(c,nvar,istr){
 	}
 	if(rmin<=-0.000001)icpo=-1 else icpo=1
 	return(icpo)
-	}
+}
 
 ######################################################################################################
 ################################### The FCN FUNCTION ###############################################
@@ -528,12 +539,12 @@ fcn<-function(modtyp,nlags,dataf,sd,nvar,a,c,iwopt){
 				gam=dataf[ir,ic,2,lag]
 				rnp=dataf[ir,ic,3,lag]
 ####	 TODO: NEED TO FIX UP THE NEXT FEW LINES.
-c				Call 'GAMMAH' function.
 				prgam=gammah(h,modtyp,C0,C1,a1,C2,a2)
 
-### Weighted sums-of-squares
-				if(ir==ic)wt=sd[ir] wt=(sd[ir])^(-4.0) else wt=((sd[ir])^(-4.0))+((sd[ic])^(-4.0))
-						
+###	Weighted sums-of-squares
+				if(ir==ic)wt=(sd[ir])^(-4.0) else wt=((sd[ir])^(-4.0))+((sd[ic])^(-4.0))
+				
+				wdevs=((gam-prgam)^2.0)*wt
 
 				if(iwopt==1) wdevs=wdevs else
 				if(iwopt==2) wdevs=wdevs*rnp else
@@ -554,6 +565,7 @@ c				Call 'GAMMAH' function.
 ######################################################################################################
 metrop<-function(f,fo,c){
 	pracc=exp((fo-f)/c)
+###	Using the line below it returns a random number between 0 and 1 based on the N(0,1)
 	ran=rnorm(1);while(ran>1||ran<0){ran=rnorm(1)};ran
 	if(ran<=pracc)accrej=1.0 else accrej=-1.0
 	return(accrej)

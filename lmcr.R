@@ -54,12 +54,25 @@ data$FLOW <- bct(data$FLOW,FLOW.lambda$lambda)
 spdf <- SpatialPointsDataFrame(data[,1:2],data)
 
 ### STEP 1. Create A gstat object with TP and flow.
-g = gstat(NULL, "TP", bc.spdf$TP ~ 1, bc.spdf,,maxdist=200)
-g = gstat(g, "FLOW", bc.spdf$FLOW ~ 1, bc.spdf,maxdist=200)
+g = gstat(NULL, "TP", spdf$TP ~ 1, spdf,,maxdist=200)
+g = gstat(g, "FLOW", spdf$FLOW ~ 1, spdf,maxdist=200)
 
 ### STEP 2. Create intial values for the models.
 #Create variogarms for plotting.
-v = variogram(g.bc,cutoff=200,width=200/20)
+v = variogram(g,cutoff=200,width=200/20)
+####	Need to re-organise for the lmcr function.
+bins<-as.numeric(summary(v$id))[1]
+cross<-v[1:bins,3]
+auto.1<-v[(bins+1):(2*bins),3]
+auto.2<-v[(2*bins+1):(3*bins),3]
+dist<-v[(bins+1):(2*bins),2]
+pairs<-v[(bins+1):(2*bins),1]
+semvar=data.frame(dist,auto.1,cross,auto.2,pairs)
+
+#lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock)
+#need to know wgt,cparf,covar,guessa,lock
+lmcr(semvar,20,2,?,1,?,4,?,200,?,?)
+
 #Plot the cross covariogram and get some initial values for it.
 plot(v,g)
 #The cross covariance models using initial values, these will change.
