@@ -258,16 +258,17 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 								if((ao+rc)<=amin||(ao+rc)>amax)next
 							}
 						}else{
-						if(modtyp==4||modtyp==5){
-							if(istr==1){
-								if((ao+rc)<=amin||(ao+rc)>=a[2])next
+							if(modtyp==4||modtyp==5){
+								if(istr==1){
+									if((ao+rc)<=amin||(ao+rc)>=a[2])next
+								}else{
+									if((ao+rc)<=a[1]||(ao+rc)>amax)next
+								}
 							}else{
-								if((ao+rc)<=a[1]||(ao+rc)>amax)next
+								break
 							}
-						}else
-							break
-					}
-								
+						}
+					}	
 
 					a[istr]=ao+rc
 					fo=f
