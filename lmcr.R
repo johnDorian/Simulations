@@ -4,7 +4,7 @@
 ### Title: LMCR_FINAL.R ########################################################
 ### Author: Jason Lessels j.lessels@usyd.edu.au ################################
 ### Created: Wed Feb  3 15:42:52 2010 ##########################################
-### Modified: Wed Feb  3 15:42:52 2010 #########################################
+### Modified: Wed Feb  21/03/2010 ##############################################
 ### Aim: To perform LMCR #######################################################
 ### Description: This script performs LMCR on temporal data ####################
 ################################################################################
@@ -20,12 +20,12 @@
 ## Let's universalise plotting on all Oprating Systems.
 win.graph = function(){if(.Platform$OS=='unix') x11() else win.graph=win.graph}
 ## Now so we can easly check the determinates of fit.lmc using det.fit
-det.fit <- function(object){
-tpn <- object$model$TP$psill[1]
-fln <- object$model$FLOW$psill[1]
-tpfln <- object$model$TP.FLOW$psill[1]
-d <- matrix(c(tpn,tpfln,tpfln,fln),c(2,2))
-print(det(d))
+covStructure <- function(object){
+auto1 <- object$model[1][[1]][[2]][1]
+auto2 <- object$model[3][[1]][[2]][1]
+cross <- object$model[2][[1]][[2]][1]
+d <- matrix(c(auto1,cross,cross,auto2),c(2,2))
+return(d)
 }
 
 ###Now we can actually start with the script.
@@ -41,14 +41,8 @@ back.up <- data
 data <- data[,-c(1,2)]
 names(data) <- c("X","Y","TP","FLOW")
 ## Add arbituary value to the data, so we can transform the data.
-data$TP <- data$TP+0.01
-data$FLOW <- data$FLOW+0.01
-## Determine the correct lambda values for the transformations of both TP and Flow
-TP.lambda <- boxcox.fit(data$TP)
-FLOW.lambda <- boxcox.fit(data$FLOW)
-data <- data
-data$TP <- bct(data$TP,TP.lambda$lambda)
-data$FLOW <- bct(data$FLOW,FLOW.lambda$lambda)
+data$TP <- log(data$TP+0.01)
+data$FLOW <- log(data$FLOW+0.01)
 
 ##Create gstat objects of the data
 spdf <- SpatialPointsDataFrame(data[,1:2],data)
@@ -62,26 +56,31 @@ g = gstat(g, "FLOW", spdf$FLOW ~ 1, spdf,maxdist=200)
 v = variogram(g,cutoff=200,width=200/20)
 ####	Need to re-organise for the lmcr function.
 bins<-as.numeric(summary(v$id))[1]
-cross<-v[1:bins,3]
-auto.1<-v[(bins+1):(2*bins),3]
-auto.2<-v[(2*bins+1):(3*bins),3]
-dist<-v[(bins+1):(2*bins),2]
-pairs<-v[(bins+1):(2*bins),1]
+cross<-split(v,v$id)[[1]]$gamma
+auto.1<-split(v,v$id)[[2]]$gamma
+auto.2<-split(v,v$id)[[3]]$gamma
+dist<-split(v,v$id)[[1]]$dist
+pairs<-split(v,v$id)[[1]]$np
 semvar=data.frame(dist,auto.1,cross,auto.2,pairs)
 
 #lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock)
 #need to know wgt,cparf,covar,guessa,lock
-lmcr(semvar,20,2,?,1,?,4,?,200,?,?)
+
 
 #Plot the cross covariogram and get some initial values for it.
 plot(v,g)
 #The cross covariance models using initial values, these will change.
-g = gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Sph",48,0.2),fill.all=TRUE)
+g = gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Mat",48,0.2),fill.all=TRUE)
 
 ### STEP 3. Find the range of each covariogram using fit.lmc
 ##Use fit.lmc() function to find the ranges for each covariogram.
-fit.range=fit.lmc(v,g,fit.lmc=TRUE,fit.ranges=TRUE)
-fit.range
+fit=fit.lmc(v,g,fit.lmc=FALSE)
+covar<-covStructure(fit)
+eigen(covar)
+lmcr(semvar,20,2,1,1,cparf,4,covar,200,48,0)
+
+
+
 ##Avergae the ranges out and use the average range as the max range.
 range<-mean(fit.range$model$TP[[3]][2],fit.range$model$TP.FLOW[[3]][2],fit.range$model$FLOW[[3]][2])
 g.ave.range = gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Sph",range,0.2),fill.all=TRUE)

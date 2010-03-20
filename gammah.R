@@ -1,11 +1,9 @@
-gammah<-function(x1,y1,x2,y2,modtyp,co,grad,c1,a1,c2,a2,sill){
-	x1mx2=x1=x2
-	y1my2=y1-y2
-	h=sqrt(x1mx2^2+y1my2^2)
+gammah<-function(h,modtyp,co,c1,a1,c2,a2){
 	alpha=1.75
-	
+	sill=co+c1+c2
+
 	switch(modtyp,
-		iso.lin=return(co+grad*h),
+		iso.lin=return(co*h),
 		iso.cir=
 		if(h>a1)
 			return(sill)
@@ -38,13 +36,13 @@ gammah<-function(x1,y1,x2,y2,modtyp,co,grad,c1,a1,c2,a2,sill){
 			else
 				return(co+c1*(1.5*(h/a1)-0.5*(h/a1)^3)+c2*(1.5*(h/a2)-0.5*(h/a2)^3)),
 
-		dou.exp=return(co+c1*(1-exp((-h/a1)))+c2*(1-exp((-h/a2)))),
+		dou.exp=return(co+c1(1-exp((-h/a1)))+c2*(1-exp((-h/a2)))),
 		
 		stable=return(co+c1*(1-exp(-h^alpha/a1^alpha))),
 		
 		dou.sta=return(co+c1*(1-exp(-h^alpha/a1^alpha))+c2*(1-exp(-h/a2))),
 		
-		bro=return(co+grad*h^a1)
+		bro=return(co*h^a1)
 	)
 }
 		

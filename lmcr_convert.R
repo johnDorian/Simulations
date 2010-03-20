@@ -3,7 +3,7 @@
 ### Aim: The aim of this script is to perform lmcr of two variables through time. 
 ### Author: Jason Lessels
 ### Date Created: 12/03/2010
-### Last Modified: 17/03/2010
+### Last Modified: 20/03/2010
 ### References: The code is completly based on the work by Thomas Bishop, and is converted from the code of Lark, based on Lark's 2003 paper.
 ### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user. In the original script most things where written to file 13, everything that was to be written to this file has been written in the list everything else that was to be written else where has been labeled with other.blah
 ################################################################################
@@ -22,25 +22,24 @@ setwd("~/Documents/code/Simulations")
 ###nstr - number of structures (excluding the nugget). 
 ###amax - max. value of distance parameter.
 ###icvp - set to 1 to constrain covariances to be positive, else 0.
-###a - holds distance parameters.
+###a - holds distance parameters. - more than 1 value
 ###c - holds variances c(0:2 [structures],nvar,nvar).
 ###am - holds maximum change of distance parameters.
 ###dm - holds maximum change for each parameter (isomorphic to c).
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 ###Declare all the variables
-lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
+lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 ### obtain samvar from lmcr.R script.
 ### nolags = 20
-### nvar = 2
-### wgt = ?
+### wgt = ? - 1 2 3 or 4
 ### icvp = 1
-### cparf = ?
-### modtyp = number based on the models suggested in gammah function.
-### covar = 2*2 matrix other than that i dont know.
+### cparf = - Parameter 'cparf' is the initial temperature in the input file
+### modtyp = 1:10 iso.exp=4 number based on the models suggested in gammah function.
+### covar = 2*2 nuggets with minimal adjustments. - In the lmcr.R script
 ### maxdist = 200
-### guessa = ?
-### lock = ? 1 or 0.
+### guessa = 48 - guess of the optimal distance.
+### lock = 0 - to make the distance the same for everything
 
 ### TODO declare a_out and c_out
 ###Create a list to write the results to and return at end of function. - have to declare them as zero as list wont work otherwise.
@@ -52,6 +51,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 	other.f=0,other.pacc=0)
 
 ### Final values to delcare - checked off values...
+	nvar=2
 	sd=matrix(ncol=2)
 	dataf=array(0,c(nvar,nvar,3,500))
 ###Other variables - still unsure about...
@@ -164,7 +164,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 			message("")			
 			message("Values for semivariogram are not positive-definite.")
 			message("Try remaking semivariogram with different specifications.")
-			message("")
+			
 		}	
 	}
 
@@ -212,7 +212,14 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 	nmarkov=60
 	istop=50
 	iwopt=wgt
-
+###	**************************************************************************************************
+###	**************************************************************************************************
+###	**************************************************************************************************
+### Checked everything down to here
+###	**************************************************************************************************
+###	**************************************************************************************************
+###	**************************************************************************************************
+	
 	f<-fcn(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
 	message("")
 	message('Weighted sum-of-squares of guessed parameters is:',f)
@@ -220,7 +227,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 	results$WSSGuessedParameter=f
 	results$initialTemperature=cpar
 	results$coolinParameter=alp
-	reults$numberTrialMarkovChain=nmarkov
+	results$numberTrialMarkovChain=nmarkov
 	results$numberMarkovChainReturningNoChange=istop
 	results$weightingOption=iwopt
 
@@ -239,6 +246,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 ###	Iterate cooling step.
 
 	for(ics in 1:2000){
+		cat("Step one for the ",ics," time")
 		if(nunch>=istop){
 			break
 			temp=1
@@ -249,7 +257,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 
 ###		Iterate within the step.
 		for(imc in 1:nmarkov){
-					
+						cat("Step two for the ",imc," time")
 ###			Adjust each parameter in turn.
 
 ###			Distance parameter(s) first.
@@ -257,9 +265,10 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 				for(istr in 1:nstr){
 					ao=a[istr]
 
-					repeat{					
+					repeat{
+						print("in the repear section")
 						r=rnorm(1);while(r>1||r<0){r=rnorm(1)}
-						rc=(r-0.5)*2.0*am(istr)
+						rc=(r-0.5)*2.0*am[istr]
 
 ###					Reject inappropriate values.
 						if(modtyp<4){
@@ -278,8 +287,15 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 							}else{
 								break
 							}
+						print("******************************")
+						print("******************************")
+						print("******************************")
 						}
-					}	
+					}
+					print("###################################")
+					print("###################################")
+					print("###################################")
+					print("Out of the repeat section")
 
 					a[istr]=ao+rc
 					fo=f
@@ -306,6 +322,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 
 ###			Now adjust variances.
 			for(istr in 0:nstr){
+				print(istr)
 				if(modtyp==3&&istr==2)break			
 				for(ir in 1:nvar){
 					for(ic in ir:nvar){
@@ -342,6 +359,7 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 						if(lock==1)fo=f
 
 						f<-fcn(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
+						print("did the fcn")
 						for(i in 1:2){						
 							if(f<=fo)break
 
@@ -493,22 +511,23 @@ lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,loc
 
 ###c is the matrix in question. nvar is the number of variables. istr is not needed.
 check<-function(c,nvar,istr){
+	CM=array(NA,c(2,2))
 	for(ir in 1:nvar){
 		for(ic in ir:nvar){
-			cm[ir,ic]=c[istr,ir,ic]
-			cm[ic,ir]=c[istr,ic,ir]
+			CM[ir,ic]=c[istr+1,ir,ic]
+			CM[ic,ir]=c[istr+1,ic,ir]
 		}
 	}
 
 
 ### Get the eigenvalues of the matrix cm
-	eval<-eigen(cm)$values
+	eval<-eigen(CM)$values
 	
 	rmin=10000.0
 	for(ix in 1:nvar){
 		if(rmin>=eval[ix]) rmin=eval[ix]
 	}
-	if(rmin<=-0.000001)icpo=-1 else icpo=1
+	if(rmin>=0.000001)icpo=-1 else icpo=1
 	return(icpo)
 }
 
@@ -517,14 +536,15 @@ check<-function(c,nvar,istr){
 ######################################################################################################
 
 fcn<-function(modtyp,nlags,dataf,sd,nvar,a,c,iwopt){
-
+	of=0
+	rnpt=0
 	for(ir in 1:nvar){
 		for(ic in ir:nvar){
 			if(ir==1&&ic==1)nlg=nlags[1] else
 			if(ir==1&&ic==2)nlg=nlags[2] else
 			if(ir==2&&ic==2)nlg=nlags[3]
-			C0=c[1,ir,ic]
-			C1=c[1,ir,ic]
+			co=c[1,ir,ic]
+			c1=c[1,ir,ic]
 			a1=a[1]
 			
 			if(nstr>=1){
@@ -539,7 +559,7 @@ fcn<-function(modtyp,nlags,dataf,sd,nvar,a,c,iwopt){
 				gam=dataf[ir,ic,2,lag]
 				rnp=dataf[ir,ic,3,lag]
 ####	 TODO: NEED TO FIX UP THE NEXT FEW LINES.
-				prgam=gammah(h,modtyp,C0,C1,a1,C2,a2)
+				prgam=gammah(h,modtyp,co,c1,a1,c2,a2)
 
 ###	Weighted sums-of-squares
 				if(ir==ic)wt=(sd[ir])^(-4.0) else wt=((sd[ir])^(-4.0))+((sd[ic])^(-4.0))
