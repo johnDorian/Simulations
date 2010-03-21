@@ -70,11 +70,11 @@ semvar=data.frame(dist,auto.1,cross,auto.2,pairs)
 #Plot the cross covariogram and get some initial values for it.
 plot(v,g)
 #The cross covariance models using initial values, these will change.
-g = gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Mat",48,0.2),fill.all=TRUE)
+g = gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Exp",48,0.2),fill.all=TRUE)
 
 ### STEP 3. Find the range of each covariogram using fit.lmc
 ##Use fit.lmc() function to find the ranges for each covariogram.
-fit=fit.lmc(v,g,fit.lmc=FALSE)
+fit=fit.lmc(v,g,fit.lmc=FALSE,fit.range=TRUE)
 covar<-covStructure(fit)
 eigen(covar)
 lmcr(semvar,20,2,1,1,cparf,4,covar,200,48,0)
