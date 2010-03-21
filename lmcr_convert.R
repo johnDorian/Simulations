@@ -8,7 +8,7 @@
 ### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user. In the original script most things where written to file 13, everything that was to be written to this file has been written in the list everything else that was to be written else where has been labeled with other.blah
 ################################################################################
 ### WARNINGS: NO TESTING, NO IDEA IF IT WORKS...
-### TODO: trouble shooting and the gammah function.. that's not that much now is it.
+### TODO: trouble shooting 
 ################################################################################
 ###Set the working directory (same as the git repo)
 setwd("~/Documents/code/Simulations")
@@ -28,27 +28,32 @@ setwd("~/Documents/code/Simulations")
 ###dm - holds maximum change for each parameter (isomorphic to c).
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
-###Declare all the variables
-lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
+###To get everything working
+	guessa=matrix(c(48,48))
+	nolags=matrix(c(20,20,20))
+	lock=1
+	cpar=55000 #must be below 100,000
+	modtyp=4 #that is iso.exp
+	icvp=1
+	wgt=1
+	maxdist=200
+test<-lmcr(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock)
+
+lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 ### obtain samvar from lmcr.R script.
 ### nolags = 20
-### wgt = ? - 1 2 3 or 4
+### wgt = ? - 1 2 3 or 4 based on the AIC function used.
 ### icvp = 1
-### cparf = - Parameter 'cparf' is the initial temperature in the input file
+### cparf = - This is now cpar as the old function was based on numerous attemps from text files
 ### modtyp = 1:10 iso.exp=4 number based on the models suggested in gammah function.
 ### covar = 2*2 nuggets with minimal adjustments. - In the lmcr.R script
 ### maxdist = 200
-### guessa = 48 - guess of the optimal distance.
+### guessa = 48 48 - guess of the optimal distance for both autos. 
 ### lock = 0 - to make the distance the same for everything
 
 ### TODO declare a_out and c_out
 ###Create a list to write the results to and return at end of function. - have to declare them as zero as list wont work otherwise.
-	results<-list(WSSGuessedParameter=0,initialTemperature=0,coolingParameter=0,
-	numberTrialMarkovChain=0,numberMarkovChainReturningNoChange=0,
-	weightingOption=0,finalWSS=0,variableAIC=0,effectiveRange1=0,
-	effectiveRange2=0,effectiveRange1stStructure=0,effectiveRange2ndStructure=0,
-	solutionAfter=0,structure=0,distanceParameter=0,ir=0,ic=0,c=0,other.ics=0,
-	other.f=0,other.pacc=0)
+	
 
 ### Final values to delcare - checked off values...
 	nvar=2
@@ -59,6 +64,11 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 	c=array(NA,c(3,nvar,nvar))
 	dm=array(NA,c(3,nvar,nvar))
 	temp=NA
+	a_out=matrix(ncol=2)
+	c_out=array(NA,c(3,nvar,nvar))
+
+
+	
 ###declaration finished...
 
 ### first loop 
@@ -66,7 +76,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 	for(ir in 1:nvar){
 		for(ic in ir:nvar){
 			index=index+1
-			for(ix in 1:nolags){
+			for(ix in 1:length(nolags)){
 				dataf[ir,ic,1,ix]=semvar[ix,1]
 		
 				if(index==1)dataf[ir,ic,2,ix]=semvar[ix,2] 
@@ -74,7 +84,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 				if(index==2)dataf[ir,ic,2,ix]=semvar[ix,3]
 					else
 				if(index==3)dataf[ir,ic,2,ix]=semvar[ix,4]
-				dataf[ir,ic,2,ix]=semvar[ix,5]
+				dataf[ir,ic,3,ix]=semvar[ix,5]
 			
 			}
 		}
@@ -141,7 +151,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 
 		if(c[2,1,1]==0||c[2,2,2]==0)c[2,1,2]=0
 		
-		c[2,2,1]=c[1,1,2]
+		c[2,2,1]=c[2,1,2]
 
 
 ###		C2 of the first variable's auto-variogram.
@@ -160,7 +170,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 ###	Check guesses for positive-definiteness. 
 	for(istr in 0:nstr){
 		icpo<-check(c,nvar,istr)
-		if(icpo>=0){
+		if(icpo<=0){
 			message("")			
 			message("Values for semivariogram are not positive-definite.")
 			message("Try remaking semivariogram with different specifications.")
@@ -171,14 +181,14 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 
 ###	Enter the annealing parameters.
 ###	These constrain how much the variogram parameters can change with each iteration.
-	for(i in 1:nstr){
+	for(ix in 1:nstr){
 		if(modtyp==1||modtyp==4){
 			amin=dataf[1,1,1,2]/3
-			if(a[i]<33)am[i]=1 else am[i]=2
+			if(a[ix]<33)am[ix]=1 else am[ix]=2
 		}else
 		if(modtyp==2||modtyp==5){
 			amin=dataf[1,1,1,2]
-			if(a[i]<100)am[i]=1 else am[i]=2
+			if(a[ix]<100)am[ix]=1 else am[ix]=2
 		}
 	}
 
@@ -206,30 +216,18 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 
 ###	Parameter 'cparf' is the initial temperature in the input file.  If no 
 ###	previous attempt at a solution has been made then 'cpar' is set to 'cparf'.
-	if(ics==0)cpar=cparf
 
 	alp=0.975
 	nmarkov=60
 	istop=50
 	iwopt=wgt
-###	**************************************************************************************************
-###	**************************************************************************************************
-###	**************************************************************************************************
-### Checked everything down to here
-###	**************************************************************************************************
-###	**************************************************************************************************
-###	**************************************************************************************************
-	
-	f<-fcn(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
+
+	f<-fcn(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt)
 	message("")
 	message('Weighted sum-of-squares of guessed parameters is:',f)
 	message("")
-	results$WSSGuessedParameter=f
-	results$initialTemperature=cpar
-	results$coolinParameter=alp
-	results$numberTrialMarkovChain=nmarkov
-	results$numberMarkovChainReturningNoChange=istop
-	results$weightingOption=iwopt
+	results<-list(WSSGuessedParameter=f,initialTemperature=cpar,coolingParameter=alp,
+	numberTrialMarkovChain=nmarkov,numberMarkovChainReturningNoChange=istop,weightingOption=iwopt)
 
 ###	**************************************************************************************************
 
@@ -246,8 +244,8 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 ###	Iterate cooling step.
 
 	for(ics in 1:2000){
-		cat("Step one for the ",ics," time")
-		if(nunch>=istop){
+
+		if(nunch>istop){
 			break
 			temp=1
 		}
@@ -257,7 +255,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 
 ###		Iterate within the step.
 		for(imc in 1:nmarkov){
-						cat("Step two for the ",imc," time")
+
 ###			Adjust each parameter in turn.
 
 ###			Distance parameter(s) first.
@@ -266,7 +264,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 					ao=a[istr]
 
 					repeat{
-						print("in the repear section")
+
 						r=rnorm(1);while(r>1||r<0){r=rnorm(1)}
 						rc=(r-0.5)*2.0*am[istr]
 
@@ -279,23 +277,18 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 							}
 						}else{
 							if(modtyp==4||modtyp==5){
+	
 								if(istr==1){
 									if((ao+rc)<=amin||(ao+rc)>=a[2])next
 								}else{
 									if((ao+rc)<=a[1]||(ao+rc)>amax)next
 								}
-							}else{
-								break
 							}
-						print("******************************")
-						print("******************************")
-						print("******************************")
+							break
+							
 						}
 					}
-					print("###################################")
-					print("###################################")
-					print("###################################")
-					print("Out of the repeat section")
+
 
 					a[istr]=ao+rc
 					fo=f
@@ -304,7 +297,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 					
 					if(f>fo){
 					
-						accrej<-metrop(f,fo,cpar,accrej)
+						accrej<-metrop(f,fo,cpar)
 					
 						if(accrej<0){
 							rej=rej+1
@@ -313,7 +306,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 							break
 						}
 					}
-					if(accrej<0){break}
+					if(f>fo&&accrej<0){break}					
 					acc=acc+1	
 				}	
 
@@ -322,12 +315,13 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 
 ###			Now adjust variances.
 			for(istr in 0:nstr){
-				print(istr)
+
 				if(modtyp==3&&istr==2)break			
 				for(ir in 1:nvar){
 					for(ic in ir:nvar){
 						cold=c[istr+1,ir,ic]
-						repeat{					
+						repeat{
+							count=count+1					
 							r=rnorm(1);while(r>1||r<0){r=rnorm(1)}
 							rc=(r-0.5)*2.0*dm[istr+1,ir,ic]
 
@@ -340,7 +334,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 								if(icvp==-1&&(cold+rc)>0)next
 							}
 						
-						
+
 
 ###						Zero value if less than tolerance.
 							if(abs(cold+rc)>=abs(covar[ir,ic]/1000)) c[istr+1,ir,ic]=cold+rc else c[istr+1,ir,ic]=0
@@ -351,21 +345,23 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 							icpo<-check(c,nvar,istr)
 							if(icpo<0){
 								c[istr+1,ir,ic]=cold
-								c[istr+1,ic,ir]=c[istr,ir,ic]
+								c[istr+1,ic,ir]=c[istr+1,ir,ic]
 								next
 							}
+
+						break
 						}
 
 						if(lock==1)fo=f
 
-						f<-fcn(modtyp,nlags,dataf,sd,nvar,a,c,iwopt)
-						print("did the fcn")
-						for(i in 1:2){						
+						f<-fcn(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt)
+
+
+						for(i in 1:1){						
 							if(f<=fo)break
 
 
-							accrej<-metrop(f,fo,cpar)
-						
+							
 							if(accrej<0){
 								rej=rej+1
 								c[istr+1,ir,ic]=cold
@@ -375,7 +371,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 								break
 							}
 						}
-						if(temp==2)break					
+						if(!is.na(temp)&&temp==2)break					
 						acc=acc+1
 
 					}
@@ -386,8 +382,8 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 
 			if(ics==1)paccin=pacc
 		}
-		for(i in 1:2){
-			if(temp==1)break
+		for(i in 1:1){
+			if(!is.na(temp)&&temp==1)break
 			if(fic==f){
 				nunch=nunch+1 
 			}else{
@@ -409,7 +405,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 					message("(please be patient)...")
 					message("")
 				}else{
-					if(iconto==1)stop(options("show.error.messages"=FALSE))
+					if(iconto==1)stop()
 				}
 			}
 		}
@@ -426,7 +422,6 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 	}
 ############################################
 ###	Write out results
-	message('Solotion at: ')
 ###Important note: To get the next part to work within the loop and add the results to the list need to first save as data.frame using rbind then convert to the list using as.numeric
 	results$solutionAfter=ics-1
 ###	need to create a data.frame here
@@ -436,32 +431,39 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 	d.ic=data.frame(val=NA)
 	d.c=data.frame(val=NA)
 	for(istr in 0:nstr){
-		message("Solution at: ")
-		structure$val=rbind(structure$val,istr)
+		
+		structure=rbind(structure[,1],istr)
 		
 		if(istr>0){
+			message("Solution at: ")
 			message("Distance parameter: ",a[istr])
-			distance$val=rbind(distance$val,a[istr])
+			distance=rbind(distance,a[istr])
 			a_out[istr]=a[istr]
 		}
 		for(ir in 1:nvar){
 			for(ic in ir:nvar){
-				message(ir,ic,c[istr+1,ir,ic])
-				d.ir$val=rbind(d.ir$val,ir)
-				d.ic$val=rbind(d.ic$val,ic)
-				d.c$val=rbind(d.c$val,c[istr+1,ir,ic])
-				c_out[istr,ir,ic]=c[istr+1,ir,ic]
+				if(istr>0){				
+					message(ir,ic,c[istr+1,ir,ic])
+				}
+				d.ir=rbind(d.ir,ir)
+				d.ic=rbind(d.ic,ic)
+				d.c=rbind(d.c,c[istr+1,ir,ic])
 			}
 		}
 		if(istr==2)break
 		
 	}
 ###My new section to convert the data.frames to the lists.
-	results$structure=as.numeric(structure$val)
-	results$distance=as.numeric(distance$val)
-	results$sir=as.numeric(d.ir$val)
-	results$sic=as.numeric(d.ir$val)
-	results$sc=as.numeric(d.c$val)
+	results$structure=as.numeric(structure[,1])
+	results$structure=results$structure[-1]
+	results$distance=as.numeric(distance[,1])
+	results$distance=results$distance[-1]
+	results$ir=as.numeric(d.ir[,1])
+	results$ir=results$ir[-1]
+	results$ic=as.numeric(d.ir[,1])
+	results$ic=results$ic[-1]
+	results$c=as.numeric(d.c[,1])
+	results$c=results$c[-1]
 
 	message("")
 	message("Weighted sum-of-squares of final solution is: ",f)
@@ -484,12 +486,12 @@ lmcr<-function(semvar,nolags,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock){
 		if(modtyp==1)
 			results$effectiveRange1=3*a[1]
 		else
-		if(modtype==3)
+		if(modtyp==3)
 			results$effectiveRange2=3-((a[2]-1)*1.26795)*a[1]
 		else
 		if(modtyp==4){
 			results$effectiveRange1stStructure=3*a[1]
-			results$effectiveRange1stStructure=3*a[2]
+			results$effectiveRange2ndStructure=3*a[2]
 		}
 	}
 	return(results)
@@ -527,15 +529,14 @@ check<-function(c,nvar,istr){
 	for(ix in 1:nvar){
 		if(rmin>=eval[ix]) rmin=eval[ix]
 	}
-	if(rmin>=0.000001)icpo=-1 else icpo=1
+	if(rmin<=-0.000001)icpo=-1 else icpo=1
 	return(icpo)
 }
 
 ######################################################################################################
 ################################### The FCN FUNCTION ###############################################
 ######################################################################################################
-
-fcn<-function(modtyp,nlags,dataf,sd,nvar,a,c,iwopt){
+fcn<-function(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt){
 	of=0
 	rnpt=0
 	for(ir in 1:nvar){
@@ -544,12 +545,12 @@ fcn<-function(modtyp,nlags,dataf,sd,nvar,a,c,iwopt){
 			if(ir==1&&ic==2)nlg=nlags[2] else
 			if(ir==2&&ic==2)nlg=nlags[3]
 			co=c[1,ir,ic]
-			c1=c[1,ir,ic]
+			c1=c[2,ir,ic]
 			a1=a[1]
 			
 			if(nstr>=1){
 				c2=c[3,ir,ic]
-				a2=a[1]
+				a2=a[2]
 			}else{
 				c2=0.0
 				a2=0.0
@@ -583,8 +584,8 @@ fcn<-function(modtyp,nlags,dataf,sd,nvar,a,c,iwopt){
 ######################################################################################################
 ################################### The metrop FUNCTION ##############################################
 ######################################################################################################
-metrop<-function(f,fo,c){
-	pracc=exp((fo-f)/c)
+metrop<-function(f,fo,cpar){
+	pracc=exp((fo-f)/cpar)
 ###	Using the line below it returns a random number between 0 and 1 based on the N(0,1)
 	ran=rnorm(1);while(ran>1||ran<0){ran=rnorm(1)};ran
 	if(ran<=pracc)accrej=1.0 else accrej=-1.0
