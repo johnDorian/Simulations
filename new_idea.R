@@ -1,4 +1,6 @@
 ####Getting the variables right.
+index=0
+nolags=nlags
 for(ir in 1:nvar){
 	for(ic in ir:nvar){
 		index=index+1
@@ -15,7 +17,7 @@ for(ir in 1:nvar){
 		}
 	}
 }
-nlags=nolags
+
 
 
 
@@ -34,8 +36,6 @@ nlags=nolags
 ###	Enter initial guesses of the variogram parameters.
 
 ###	Distance parameters.
-	a=guessa
-
 ###	Nugget of the first variable's auto-variogram.
 	c[1,1,1]=covar[1,1]*0.25
 
@@ -137,10 +137,10 @@ fcn<-function(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt){
 				c2=0.0
 				a2=0.0
 			}
-			for(lag in 1:nlg){
-				h=dataf[ir,ic,1,lag]
-				gam=dataf[ir,ic,2,lag]
-				rnp=dataf[ir,ic,3,lag]
+			for(j in 1:nlg){
+				h=dataf[ir,ic,1,j]
+				gam=dataf[ir,ic,2,j]
+				rnp=dataf[ir,ic,3,j]
 ####	 TODO: NEED TO FIX UP THE NEXT FEW LINES.
 				prgam=gammah(h,modtyp,co,c1,a1,c2,a2)
 

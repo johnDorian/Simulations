@@ -74,7 +74,7 @@ g = gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Exp",48,0.2),fill.all=TRUE)
 
 ### STEP 3. Find the range of each covariogram using fit.lmc
 ##Use fit.lmc() function to find the ranges for each covariogram.
-fit=fit.lmc(v,g,fit.lmc=FALSE,fit.range=TRUE)
+fit=fit.lmc(v,g,fit.lmc=FALSE,fit.range=TRUE,fit.method=REML)
 covar<-covStructure(fit)
 eigen(covar)
 lmcr(semvar,20,2,1,1,cparf,4,covar,200,48,0)
