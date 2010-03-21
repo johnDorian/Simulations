@@ -8,7 +8,7 @@
 ### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user. In the original script most things where written to file 13, everything that was to be written to this file has been written in the list everything else that was to be written else where has been labeled with other.blah
 ################################################################################
 ### WARNINGS: NO TESTING, NO IDEA IF IT WORKS...
-### TODO: trouble shooting 
+### TODO: trouble shooting, lots of mistakes, so be careful. 
 ################################################################################
 ###Set the working directory (same as the git repo)
 setwd("~/Documents/code/Simulations")
@@ -29,14 +29,16 @@ setwd("~/Documents/code/Simulations")
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 ###To get everything working
-	guessa=matrix(c(48,48))
-	nolags=matrix(c(20,20,20))
+	guessa=ranger(fit)
+	nlags=matrix(c(length(semvar[,1]),length(semvar[,1]),length(semvar[,1])))
 	lock=1
 	cpar=55000 #must be below 100,000
 	modtyp=4 #that is iso.exp
 	icvp=1
 	wgt=1
 	maxdist=200
+	semvar<-semVar(v)
+	covar<-covStructure(fit)
 test<-lmcr(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock)
 
 lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
@@ -240,6 +242,11 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 
 	fic=-10.0
 	nunch=0
+### Variables for recording changing WSS.
+	d.f<-data.frame(val=NA)
+	d.ics<-data.frame(val=NA)
+	d.pacc<-data.frame(val=NA)
+
 
 ###	Iterate cooling step.
 
@@ -321,7 +328,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 					for(ic in ir:nvar){
 						cold=c[istr+1,ir,ic]
 						repeat{
-							count=count+1					
+												
 							r=rnorm(1);while(r>1||r<0){r=rnorm(1)}
 							rc=(r-0.5)*2.0*dm[istr+1,ir,ic]
 
@@ -360,7 +367,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 						for(i in 1:1){						
 							if(f<=fo)break
 
-
+							accrej<-metrop(f,fo,cpar)
 							
 							if(accrej<0){
 								rej=rej+1
@@ -399,11 +406,15 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 				message('and decrease the initial temperature. If less than 0.9,')
 				message('reject and increase the initial temperature).')
 				iconto<-as.numeric(readline('To accept press 0, to exit press 1:'))
+
 				if(iconto==0){
 					message("")
 					message("Minimising weighted sum-of-squares")
 					message("(please be patient)...")
 					message("")
+					message("(Please watch graph to monitor WSS)")
+					message("")
+					message("Warning: (Closing Graphic will quit process)")
 				}else{
 					if(iconto==1)stop()
 				}
@@ -415,11 +426,21 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 
 ###		Parameter 'ics' is the Markov chain number, 'f' is the criterion minimised
 ###		and 'pacc' is how much it has changed since the last time.
-		results$other.ics=ics
-		results$other.f=f
-		results$other.pacc=pacc
+		if(ics==1)plot(ics,f,ylim=c(0,f*1.2),xlim=c(0,2000),cex=0.5,xlab="Perturbations",ylab="WSS")
+		if(ics>1)points(ics,f,cex=0.5)
+		
+		d.f<-rbind(d.f,f)
+		d.ics<-rbind(d.ics,ics)
+		d.pacc<-rbind(d.pacc,pacc)
 
 	}
+###	Save the iteration process to the outputed list
+	results$other.ics=as.numeric(d.ics[,1])
+	results$other.ics=results$other.ics[-1]
+	results$other.f=as.numeric(d.f[,1])
+	results$other.f=results$other.f[-1]
+	results$other.pacc=as.numeric(d.pacc[,1])
+	results$other.pacc=results$other.pacc[-1]
 ############################################
 ###	Write out results
 ###Important note: To get the next part to work within the loop and add the results to the list need to first save as data.frame using rbind then convert to the list using as.numeric
@@ -592,3 +613,29 @@ metrop<-function(f,fo,cpar){
 	return(accrej)
 }
 
+#####
+###Some more functions to get the variables right easier.
+covStructure <- function(object){
+auto1 <- object$model[1][[1]][[2]][1]
+auto2 <- object$model[3][[1]][[2]][1]
+cross <- object$model[2][[1]][[2]][1]
+d <- matrix(c(auto1,cross,cross,auto2),c(2,2))
+return(d)
+}
+
+semVar<-function(object){
+bins<-as.numeric(summary(object$id))[1]
+cross<-split(object,object$id)[[1]]$gamma
+auto.1<-split(object,object$id)[[2]]$gamma
+auto.2<-split(object,object$id)[[3]]$gamma
+dist<-split(object,object$id)[[1]]$dist
+pairs<-split(object,object$id)[[1]]$np
+semvar=data.frame(dist,auto.1,cross,auto.2,pairs)
+}
+
+ranger<-function(object){
+lag<-c(NA,NA)
+lag[1]<-object$model[[1]]$range[2]
+lag[2]<-object$model[[3]]$range[2]
+return(lag)
+}
