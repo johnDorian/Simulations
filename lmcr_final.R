@@ -26,6 +26,8 @@ setwd("~/Documents/code/Simulations/")
 data<-read.csv("TP_flow.csv", header=TRUE)
 ### Load the nessacry libraries. A couple for variograms, and some for the boxcox transformations.
 library(gstat)
+### Load the lmcr functions - from script.
+source("lmcr_convert.R")
 ## Clean up the dataset - create a back.up of the data
 back.up <- data
 data <- data[,-c(1,2)]
