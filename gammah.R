@@ -10,8 +10,8 @@ gammah<-function(h,modtyp,co,c1,a1,c2,a2){
 		else{
 			hovera=h/a1
 			angle=atan(sqrt(1-hovera^2)/(hovera+0.000001))
-			h4=twoopi*hovera*sqrt(1-hovera^2)
-			return(co+c1*(twoopi*angle+h4))
+			h4=0.63662*hovera*sqrt(1-hovera^2)
+			return(co+c1*(0.63662*angle+h4))
 		},
 		
 		iso.sph=
