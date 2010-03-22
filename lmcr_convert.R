@@ -611,9 +611,9 @@ return(d)
 
 semVar<-function(object){
 bins<-as.numeric(summary(object$id))[1]
-cross<-split(object,object$id)[[1]]$gamma
+cross<-split(object,object$id)[[3]]$gamma
 auto.1<-split(object,object$id)[[2]]$gamma
-auto.2<-split(object,object$id)[[3]]$gamma
+auto.2<-split(object,object$id)[[1]]$gamma
 dist<-split(object,object$id)[[1]]$dist
 pairs<-split(object,object$id)[[1]]$np
 semvar=data.frame(dist,auto.1,cross,auto.2,pairs)
