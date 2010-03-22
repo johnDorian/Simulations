@@ -77,5 +77,28 @@ maxdist=200
 semvar<-semVar(v)
 ### Get the gstat estimated values of the variogram structure to initialise the lmcr.
 covar<-covStructure(fit)
-### And now we run the model
-test<-lmcr(semvar,nlags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock)
+### And now we run the model. NOTE: istop is also avaliable to change the length of nonchanges with wss, the defualt is 50. This should not be changed until an approitae temperature value has been found.
+test<-lmcr(semvar,nlags,wgt,icvp,cpar,modtyp,covar,maxdist,29,lock)
+
+c[1]=auto1.nug
+c[2]=cross.nug
+c[3]=auto2.nug
+c[4]=auto1.sill
+c[5]=cross.sill
+c[6]=auto2.sill
+### Replace the values into fit
+#cross - nug
+g$model[2][[1]][[2]][1]=test$c[2]
+#cross - sph
+g$model[2][[1]][[2]][2]=test$c[6]
+
+#auto1 - nug
+g$model[1][[1]][[2]][1]=test$c[1]
+#auto1 - sph
+g$model[1][[1]][[2]][2]=test$c[5]
+
+#auto2 - nug
+g$model[3][[1]][[2]][1]=test$c[3]
+#auto2 - sph
+g$model[3][[1]][[2]][2]=test$c[4]
+plot(v,g)

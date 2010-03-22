@@ -55,13 +55,6 @@ g = gstat(g, "FLOW", spdf$FLOW ~ 1, spdf,maxdist=200)
 #Create variogarms for plotting.
 v = variogram(g,cutoff=200,width=200/20)
 ####	Need to re-organise for the lmcr function.
-bins<-as.numeric(summary(v$id))[1]
-cross<-split(v,v$id)[[1]]$gamma
-auto.1<-split(v,v$id)[[2]]$gamma
-auto.2<-split(v,v$id)[[3]]$gamma
-dist<-split(v,v$id)[[1]]$dist
-pairs<-split(v,v$id)[[1]]$np
-semvar=data.frame(dist,auto.1,cross,auto.2,pairs)
 
 #lmcr<-function(semvar,nolags,nvar,wgt,icvp,cparf,modtyp,covar,maxdist,guessa,lock)
 #need to know wgt,cparf,covar,guessa,lock
@@ -75,9 +68,18 @@ g = gstat(g,id=c("TP","FLOW"),model=vgm(0.5,"Exp",48,0.2),fill.all=TRUE)
 ### STEP 3. Find the range of each covariogram using fit.lmc
 ##Use fit.lmc() function to find the ranges for each covariogram.
 fit=fit.lmc(v,g,fit.lmc=FALSE,fit.range=TRUE,fit.method=REML)
+
+guessa=ranger(fit)
+nlags=matrix(c(length(semvar[,1]),length(semvar[,1]),length(semvar[,1])))
+lock=1
+cpar=200 #must be below 100,000
+modtyp=4 #that is iso.exp
+icvp=1
+wgt=1
+maxdist=200
+semvar<-semVar(v)
 covar<-covStructure(fit)
-eigen(covar)
-lmcr(semvar,20,2,1,1,cparf,4,covar,200,48,0)
+test<-lmcr(semvar,nlags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock)
 
 
 

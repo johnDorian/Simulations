@@ -3,7 +3,7 @@
 ### Aim: The aim of this script is to perform lmcr of two variables through time. 
 ### Author: Jason Lessels
 ### Date Created: 12/03/2010
-### Last Modified: 20/03/2010
+### Last Modified: 22/03/2010
 ### References: The code is completly based on the work by Thomas Bishop, and is converted from the code of Lark, based on Lark's 2003 paper.
 ### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user. In the original script most things where written to file 13, everything that was to be written to this file has been written in the list everything else that was to be written else where has been labeled with other.blah
 ################################################################################
@@ -29,7 +29,7 @@ setwd("~/Documents/code/Simulations")
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 
-lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
+lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,istop=50){
 ### obtain samvar from lmcr.R script.
 ### nolags = 20
 ### wgt = ? - 1 2 3 or 4 based on the AIC function used.
@@ -114,7 +114,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 
 
 	if(modtyp<4){
-		if(modtyp==3)nstr=2 else nstr=1
+		nstr=1
 ### C1 of the first variable's auto-variogram.		
 		c[2,1,1]=covar[1,1]*0.75
 ### C1 of the second variable's auto-variogram
@@ -129,7 +129,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 
 
 	if(modtyp>=4){
-		nstr=2
+		if(modtyp>=6)nstr=2 else nstr=1
 ### C1 of the first variable's auto-variogram.
 		c[2,1,1]=covar[1,1]*0.375
 
@@ -204,12 +204,10 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 
 
 
-###	Parameter 'cparf' is the initial temperature in the input file.  If no 
-###	previous attempt at a solution has been made then 'cpar' is set to 'cparf'.
+
 
 	alp=0.975
 	nmarkov=60
-	istop=50
 	iwopt=wgt
 
 	f<-fcn(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt)
@@ -402,7 +400,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 					message("")
 					message("(Please watch graph to monitor WSS)")
 					message("")
-					message("Warning: (Closing Graphic will quit process)")
+					message("Warning: (Closing Graphics device will quit process)")
 				}else{
 					if(iconto==1)stop()
 				}
@@ -500,7 +498,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock){
 		else
 		if(modtyp==4){
 			results$effectiveRange1stStructure=3*a[1]
-			results$effectiveRange2ndStructure=3*a[2]
+
 		}
 	}
 	return(results)
