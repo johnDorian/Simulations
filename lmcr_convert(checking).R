@@ -242,7 +242,6 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,isto
 			break
 			temp=1
 		}
-		
 #####	NO BRACKETS ARE BROKEN ABOVE THIS LINE
 		rej=0
 		acc=0
@@ -273,39 +272,34 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,isto
 							if(modtyp==4||modtyp==5){
 	
 								if(istr==1){
-									
 									if((ao+rc)<=amin||(ao+rc)>=a[2])next
-									
 								}else{
-									if((ao+rc)<=a[1]||(ao+rc)>amax){
-										
-										next
-									}
+									if((ao+rc)<=a[1]||(ao+rc)>amax)next
 								}
 							}
-						}
-						break
+							break
 							
+						}
 					}
-				
-					
+
 
 					a[istr]=ao+rc
 					fo=f
 
 					f<-fcn(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt)
-					for(i in 1:1){
-						if(f<=fo)break
+					
+					if(f>fo){
+					
 						accrej<-metrop(f,fo,cpar)
+					
 						if(accrej<0){
 							rej=rej+1
 							a[istr]=ao
 							f=fo
-							temp=2
 							break
 						}
 					}
-					if(!is.na(temp)&&temp==2)break					
+					if(f>fo&&accrej<0){break}					
 					acc=acc+1	
 				}	
 
@@ -366,11 +360,11 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,isto
 								c[istr+1,ir,ic]=cold
 								c[istr+1,ic,ir]=c[istr+1,ir,ic]
 								f=fo
-								temp=3
+								temp=2
 								break
 							}
 						}
-						if(!is.na(temp)&&temp==3)break					
+						if(!is.na(temp)&&temp==2)break					
 						acc=acc+1
 
 					}
@@ -605,21 +599,33 @@ metrop<-function(f,fo,cpar){
 	return(accrej)
 }
 
-######################################################################################################
-################################### The semVar FUNCTION ##############################################
-######################################################################################################
+#####
+###Some more functions to get the variables right easier.
+covStructure <- function(object){
+auto1 <- object$model[1][[1]][[2]][1]
+auto2 <- object$model[3][[1]][[2]][1]
+cross <- object$model[2][[1]][[2]][1]
+d <- matrix(c(auto1,cross,cross,auto2),c(2,2))
+return(d)
+}
+
 semVar<-function(object){
 bins<-as.numeric(summary(object$id))[1]
-auto.2<-split(object,object$id)[[3]]$gamma
+cross<-split(object,object$id)[[3]]$gamma
 auto.1<-split(object,object$id)[[2]]$gamma
-cross<-split(object,object$id)[[1]]$gamma
+auto.2<-split(object,object$id)[[1]]$gamma
 dist<-split(object,object$id)[[1]]$dist
 pairs<-split(object,object$id)[[1]]$np
 semvar=data.frame(dist,auto.1,cross,auto.2,pairs)
 }
-######################################################################################################
-################################### The gammah FUNCTION ##############################################
-######################################################################################################
+
+ranger<-function(object){
+lag<-c(NA,NA)
+lag[1]<-object$model[[1]]$range[2]
+lag[2]<-object$model[[3]]$range[2]
+return(lag)
+}
+
 gammah<-function(h,modtyp,co,c1,a1,c2,a2){
 	alpha=1.75
 	sill=co+c1+c2
