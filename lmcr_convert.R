@@ -3,15 +3,13 @@
 ### Aim: The aim of this script is to perform lmcr of two variables through time. 
 ### Author: Jason Lessels
 ### Date Created: 12/03/2010
-### Last Modified: 22/03/2010
-### References: The code is completly based on the work by Thomas Bishop, and is converted from the code of Lark, based on Lark's 2003 paper.
-### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user. In the original script most things where written to file 13, everything that was to be written to this file has been written in the list everything else that was to be written else where has been labeled with other.blah
+### Last Modified: 27/03/2010
+### References: The code is completly based on the code supplied by Thomas Bishop which is a modification of code of Lark, based on Lark's 2003 paper.
+### Notes: This script has been translated from fortran code, with the prupose to make a generic function to fit a cross-co variogram with variograms supplied, by the user.
 ################################################################################
-### WARNINGS: NO TESTING, NO IDEA IF IT WORKS...
-### TODO: trouble shooting, lots of mistakes, so be careful. 
+### WARNINGS: LIMITED TESTING - RESULTS LOOK GOOD.
+### TODO: Make variable checkers. There is very little error checking of variables.
 ################################################################################
-###Set the working directory (same as the git repo)
-setwd("~/Documents/code/Simulations")
 
 
 ############################
@@ -29,11 +27,14 @@ setwd("~/Documents/code/Simulations")
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 
-lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,istop=50){
+lmcr<-function(g,v,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,istop=50,plot.wss.change=TRUE){
+	
+### g is a gstat object with both auto variables.
+### v is a gstat package cross variogram.
 ### obtain samvar from lmcr.R script.
 ### nolags = 20
 ### wgt = ? - 1 2 3 or 4 based on the AIC function used.
-### icvp = 1
+### icvp = 1 - Should it return a positive definitive covar.
 ### cparf = - This is now cpar as the old function was based on numerous attemps from text files
 ### modtyp = 1:10 iso.exp=4 number based on the models suggested in gammah function.
 ### covar = 2*2 nuggets with minimal adjustments. - In the lmcr.R script
@@ -45,11 +46,14 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,isto
 ###Create a list to write the results to and return at end of function. - have to declare them as zero as list wont work otherwise.
 	
 
-### Final values to delcare - checked off values...
+###	Declare the variables
+
+### set nolags based on inputed semvariance data.
+	semvar=semVar(v)
+	nolags=matrix(c(length(semvar[,1]),length(semvar[,1]),length(semvar[,1])))
 	nvar=2
 	sd=matrix(ncol=2)
 	dataf=array(0,c(nvar,nvar,3,nolags[1]))
-###Other variables - still unsure about...
 	am=matrix(ncol=2)
 	c=array(NA,c(3,nvar,nvar))
 	dm=array(NA,c(3,nvar,nvar))
@@ -397,18 +401,17 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,isto
 				message('(Between 0.90-0.99 is optimal. If equal to one, reject')
 				message('and decrease the initial temperature. If less than 0.9,')
 				message('reject and increase the initial temperature).')
-				iconto<-as.numeric(readline('To accept press 0, to exit press 1:'))
+				iconto<-as.numeric(readline('To accept press 0. to exit press 1'))
 
 				if(iconto==0){
 					message("")
 					message("Minimising weighted sum-of-squares")
 					message("(please be patient)...")
 					message("")
-					message("(Please watch graph to monitor WSS)")
-					message("")
 					message("Warning: (Closing Graphics device will quit process)")
+					
 				}else{
-					if(iconto==1)stop()
+					if(iconto==1)return(cat("Try Changing cpar and try again\n")))
 				}
 			}
 		}
@@ -418,19 +421,24 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,isto
 
 ###		Parameter 'ics' is the Markov chain number, 'f' is the criterion minimised
 ###		and 'pacc' is how much it has changed since the last time.
-		if(ics==1)plot(ics,f,ylim=c(0,f*1.2),xlim=c(0,2000),cex=0.5,xlab="Perturbations",ylab="WSS")
-		if(ics>1)points(ics,f,cex=0.5)
-		
+		if(plot.wss.change==TRUE){
+			if(ics==1)plot(ics,f,ylim=c(0,f*1.2),xlim=c(0,2000),cex=0.5,xlab="Perturbations",ylab="WSS")
+			if(ics>1){
+				points(ics,f,cex=0.5)
+				legend("topright",paste("WSS= ",f),bg="white",box.col="white")
+			}
+		}
 		d.f<-rbind(d.f,f)
 		d.ics<-rbind(d.ics,ics)
 		d.pacc<-rbind(d.pacc,pacc)
-
+		
+		
 	}
 ###	Save the iteration process to the outputed list
-	results$other.ics=as.numeric(d.ics[,1])
-	results$other.ics=results$other.ics[-1]
-	results$other.f=as.numeric(d.f[,1])
-	results$other.f=results$other.f[-1]
+	results$other.its=as.numeric(d.ics[,1])
+	results$other.its=results$other.ics[-1]
+	results$other.wss=as.numeric(d.f[,1])
+	results$other.wss=results$other.f[-1]
 	results$other.pacc=as.numeric(d.pacc[,1])
 	results$other.pacc=results$other.pacc[-1]
 ############################################
@@ -483,6 +491,15 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,isto
 	message("")
 	
 	results$finalWSS=f
+###And now the variogram v added to the results
+results$variogram=v
+### Create a gstat object to make plotting results easier
+g = gstat(g,id=c("auto.1","auto.2"),model=vgm(results$c[5],"Exp",results$distance,results$c[2]))
+g = gstat(g,"auto.2",model=vgm(results$c[6],"Exp",results$distance,results$c[3]))
+g = gstat(g,"auto.1",model=vgm(results$c[4],"Exp",results$distance,results$c[1]))
+###Save the gstat object
+results$gstat=g
+
 
 ###	Overall goodness-of-fit according to Akaike Information Criterion
 ###	(Webster & McBratney, 1989).
@@ -507,6 +524,7 @@ lmcr<-function(semvar,nolags,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,isto
 
 		}
 	}
+	if(ics==2000)warning("Maximum iterations reached. Be sure to inspect final changes.")
 	return(results)
 }
 
