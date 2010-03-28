@@ -411,7 +411,7 @@ lmcr<-function(g,v,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,istop=50,plot.
 					message("Warning: (Closing Graphics device will quit process)")
 					
 				}else{
-					if(iconto==1)return(cat("Try Changing cpar and try again\n")))
+					if(iconto==1)return(cat("Try Changing cpar and try again\n"))
 				}
 			}
 		}
@@ -494,9 +494,9 @@ lmcr<-function(g,v,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,istop=50,plot.
 ###And now the variogram v added to the results
 results$variogram=v
 ### Create a gstat object to make plotting results easier
-g = gstat(g,id=c("auto.1","auto.2"),model=vgm(results$c[5],"Exp",results$distance,results$c[2]))
-g = gstat(g,"auto.2",model=vgm(results$c[6],"Exp",results$distance,results$c[3]))
-g = gstat(g,"auto.1",model=vgm(results$c[4],"Exp",results$distance,results$c[1]))
+g = gstat(g,id=c(names(g$data)[1],names(g$data)[2]),model=vgm(results$c[5],"Exp",results$distance,results$c[2]))
+g = gstat(g,names(g$data)[1],model=vgm(results$c[6],"Exp",results$distance,results$c[3]))
+g = gstat(g,names(g$data)[2],model=vgm(results$c[4],"Exp",results$distance,results$c[1]))
 ###Save the gstat object
 results$gstat=g
 
