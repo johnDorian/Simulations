@@ -22,7 +22,7 @@ setwd("~/Documents/code/Simulations/")
 ### Load the datasets.
 data<-read.csv("TP_flow.csv", header=TRUE)
 ### Load the gstat library
-library(gstat)
+library(gstat);library(TeachingDemos);library(geoR)
 ### Load the lmcr functions - from script.
 source("lmcr_convert.R")
 ## Clean up the dataset
@@ -49,11 +49,11 @@ plot(v)
 #### Set and get the parameters for the lmcr function. #####
 ############################################################
 
-### If distance should be the same. 1=leave range alone.
+### If distance should be the same. 1=guessa is correct. 0= fit range.
 lock=0
-### Set the temperature of the annealing process. See Lark 2003 for more details. 
-cpar=1500 
-### Set the model type that is desired. See the gammah function for a translation. ONLY 4 HAS BEEN TESTED (exp).
+### Set the temperature of the annealing process. See Lark 2003 for more details.
+cpar=30000
+### Set the model type that is desired. See the gammah function for a translation. ONLY 4 HAS BEEN TESTED (exp). The others should work.
 modtyp=4 
 ### Set the constraints of the returned matrix to be positive definitive.
 icvp=1
@@ -62,33 +62,28 @@ wgt=1
 ### Set the maximum distance of the variogram - based on the object v
 maxdist=200
 ### Get the gstat estimated values of the variogram structure to initialise the lmcr.
-### Order is FLOW,cross,cross,TP
-covar<-matrix(c(1,0.3,0.3,0.2),c(2,2))
-### make sure covar is the same as semvar
-## 	a.1	c
-##	c	a.2
-### And now we run the model.
-test<-lmcr(v,wgt,icvp,cpar,modtyp,covar,maxdist,c(29,29),lock)
+### Order from gstat object is second variable, cross, cross, first variable.
+covar<-matrix(c(500,0.3,0.3,0.002),c(2,2))
+### Now for the guesses. (You have to give the distance twice as the function also handles a double exp model). This dosent effect the results
+guessa<-c(50,50)
+### Run the lmcr function
+model<-lmcr(g,v,wgt,icvp,cpar,modtyp,covar,maxdist,c(50,50),lock)
 
-### Use the results once everything is done to put back into the 
-### The results from the lmcr are in the format (within test$c)
-### 1		2		3	4	5	6
-### a.1_nugget,c.1_nugget,a.2_nugget,a.1_sill,c.1_sill,a.2_sill
-g = gstat(g,id=c("TP","FLOW"),model=vgm(test$c[5],"Exp",test$distance,test$c[2]),locations=~x+y)
-g = gstat(g,"TP",model=vgm(test$c[6],"Exp",test$distance,test$c[3]))
-g = gstat(g,"FLOW",model=vgm(test$c[4],"Exp",test$distance,test$c[1]))
 ### Check out the results of the fit. 
-plot(v,g)
+plot(model$variogram,model$g)
 ### Now check the positive defitive of the results (i.e that the det is >0)
-det(matrix(c(test$c[4],test$c[5],test$c[5],test$c[6]),c(2,2)))
+det(matrix(c(model$c[4],model$c[5],model$c[5],model$c[6]),c(2,2)))
 #1.534631
 ### Now check the Structural correlation <1 ~0.7 is best.
-test$c[5]/(sqrt(test$c[4]*test$c[6]))
+model$c[5]/(sqrt(model$c[4]*model$c[6]))
 #0.5198716
-
+### Save the results. (Just so I don't need to do all this again).
+save(file="lmcr.Rdata",model)
 
 #####For the simulations
 xy <- expand.grid(1:100, 1)
 names(xy) <- c("x","y")
 g.dummy <- gstat(formula = z~1, locations = ~x+y, dummy = TRUE, beta = 0,model = vgm(1,"Exp",15), nmax = 20)
 yy <- predict(g.dummy, newdata = xy, nsim = 4)
+####Get the data organised...
+setwd("~
