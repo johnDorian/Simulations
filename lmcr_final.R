@@ -2,17 +2,15 @@
 ################################################################################
 ### Title: LMCR_FINAL.R ########################################################
 ### Author: Jason Lessels j.lessels@usyd.edu.au ################################
-### Created: Wed Feb  22/30/2010 ###############################################
-### Modified: Wed Feb  22/03/2010 ##############################################
-### Aim: To perform LMCR #######################################################
+### Created: Wed Feb  22/03/2010 ###############################################
+### Modified: Wed Feb  30/03/2010 ##############################################
+### Aim: To perform unconditional simulation using an lmcr model ###############
 ### Description:This script performs a lmcr using two main steps, the first step
 ### is by using the gstat library to get the cross co variogram and the second
 ### step is by using the method of Lark 2003 to use simulated annealing process
-### to fit the model.
+### to fit the model. Than using the gstat package unconditional simulations are### conducted.
 ################################################################################
-### NOTES: This script uses the lmcr_covert.R script for the Larks methods. The
-### main purpose of this script is to provide a cleaner easier to understand 
-### method of the lmcr.R script.
+### NOTES: This script performs unconditional simulation of water quality and discharge data.
 ################################################################################
 ### TODO:  Once everthing is working to merge this with the lmcr.R script.######
 ################################################################################
@@ -20,24 +18,29 @@
 ### Set the working directory
 setwd("~/Documents/code/Simulations/")
 ### Load the datasets.
-data<-read.csv("TP_flow.csv", header=TRUE)
+load("tp_flow_krige.Rdata")
 ### Load the gstat library
 library(gstat);library(TeachingDemos);library(geoR)
 ### Load the lmcr functions - from script.
 source("lmcr_convert.R")
 ## Clean up the dataset
-data <- data[,-c(1,2)]
-names(data) <- c("X","Y","TP","FLOW")
+names(tp_flow)
+data <-tp_flow[,-1]
+head(data)
+data <- subset(data,!is.nan(data)&!is.na(data))
+data <- data.frame(X=data[,3],Y=1,TP=data[,2],FLOW=data[,1])
+head(data)
+flow.lambda <- boxcox.fit(data$FLOW+0.1)$lambda
+tp.lambda <- boxcox.fit(data$TP+0.001)$lambda
 ### Transform the data using a log scale transformation.
 data$TP <- bct(data$TP+0.001,boxcox.fit(data$TP+0.001)$lambda)
-data$FLOW <- bct(data$FLOW+1,boxcox.fit(data$FLOW+1)$lambda)
+data$FLOW <- bct(data$FLOW+0.1,boxcox.fit(data$FLOW+0.1)$lambda)
 
 ### Create gstat object of the data
 spdf <- SpatialPointsDataFrame(data[,1:2],data)
-
 ### Create A gstat object with TP and flow.
-g = gstat(NULL, "TP", spdf$TP ~ 1,spdf,maxdist=200)
-g = gstat(g, "FLOW", spdf$FLOW ~ 1,spdf,maxdist=200)
+g = gstat(NULL, "TP", TP ~ 1,spdf,maxdist=200,dummy=TRUE,beta=-0.105761)
+g = gstat(g, "FLOW", FLOW ~ 1,spdf,maxdist=200,dummy=TRUE,beta=10.163)
 
 
 ### Create cross and auto variograms of the gstat object, using width to set the bins.
@@ -63,11 +66,11 @@ wgt=1
 maxdist=200
 ### Get the gstat estimated values of the variogram structure to initialise the lmcr.
 ### Order from gstat object is second variable, cross, cross, first variable.
-covar<-matrix(c(500,0.3,0.3,0.002),c(2,2))
+covar<-matrix(c(50,0.3,0.3,0.002),c(2,2))
 ### Now for the guesses. (You have to give the distance twice as the function also handles a double exp model). This dosent effect the results
 guessa<-c(50,50)
 ### Run the lmcr function
-model<-lmcr(g,v,wgt,icvp,cpar,modtyp,covar,maxdist,c(50,50),lock)
+model<-lmcr(g,v,wgt,icvp,10000,modtyp,covar,maxdist,c(50,50),lock)
 
 ### Check out the results of the fit. 
 plot(model$variogram,model$g)
@@ -80,10 +83,25 @@ model$c[5]/(sqrt(model$c[4]*model$c[6]))
 ### Save the results. (Just so I don't need to do all this again).
 save(file="lmcr.Rdata",model)
 
-#####For the simulations
-xy <- expand.grid(1:100, 1)
-names(xy) <- c("x","y")
-g.dummy <- gstat(formula = z~1, locations = ~x+y, dummy = TRUE, beta = 0,model = vgm(1,"Exp",15), nmax = 20)
-yy <- predict(g.dummy, newdata = xy, nsim = 4)
+#####Simulation zeit###
 ####Get the data organised...
-setwd("~
+###Make a grid for simulation. (In this example I want an hourly grid using days as the units for the x column and a constant 1 for the y column.
+x=(seq(1,1000)-1)*0.04166667
+simulation.grid <-data.frame(x=x,y=1)
+##Tell the gstat package the coordinates of the simulation.grid object
+coordinates(simulation.grid)=~x+y
+###Add the means of the calibration dataset (obtained from summary(spdf)). - for unconditional simulation.
+model$g$data$FLOW$beta=10.163
+model$g$data$TP$beta=-0.105761
+###Set the data to dummy in the gstat object  - implies that unconditional simulation is to be performed.
+model$g$FLOW$dummy=TRUE
+model$g$TP$dummy=TRUE
+###Run the simulation using the gstat model from the lmcr function using the simulation grid to simulate to and nsim=no of simulations to perform.
+system.time(
+sim1 <- predict(model$g,simulation.grid,nsim=1)
+)
+###Now see if all this has worked
+par(mfrow=c(2,1))
+plot(sim1$FLOW.sim1,type="l",ylab="FLOW")
+plot(sim1$TP.sim1,type="l",ylab="TP")### 
+
