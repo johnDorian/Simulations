@@ -27,7 +27,7 @@
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 
-lmcr<-function(g,v,wgt,icvp,cpar,modtyp,covar,maxdist,guessa,lock,istop=50,plot.wss.change=TRUE){
+lmcr<-function(g,v,wgt=1,icvp=1,cpar,modtyp,covar,maxdist,guessa,lock,istop=50,plot.wss.change=TRUE){
 	
 
 
