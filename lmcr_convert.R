@@ -54,7 +54,7 @@ if(cpar<0)stop("your cooling parameter is incorrect it must be >0")
 if(modtyp!=1)if(modtyp!=2)if(modtyp!=3)if(modtyp!=4)if(modtyp!=5)if(modtyp!=6)if(modtyp!=7)if(modtyp!=8)stop("your modtyp value is incorrect it must be between 1 and 8")
 ### covar is the right structure (i.e. is 1,2 the same as 2,1 and a 2,2 matrix)
 #Check the size of covar
-if(nrow(covar)!=2)||ncol(covar)!=2)stop("covar is incorrect it must be a 2*2 matrix")
+if(nrow(covar)!=2||ncol(covar)!=2)stop("covar is incorrect it must be a 2*2 matrix")
 #Check the cross variogram parameters are the same
 if(covar[1,2]!=covar[2,1])stop("your Cross variogarm parameter is incorrect")
 ### is maxdist positive
