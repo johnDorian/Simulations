@@ -27,7 +27,7 @@
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 
-lmcr<-function(g,v,wgt=1,icvp=1,cpar,modtyp,covar,maxdist,guessa,lock,istop=50,plot.wss.change=TRUE){
+lmcr<-function(g,v,covar,guessa,modtyp,cpar,wgt=1,icvp=1,lock=0,istop=50,plot.wss.change=TRUE){
 	
 
 
@@ -37,13 +37,13 @@ lmcr<-function(g,v,wgt=1,icvp=1,cpar,modtyp,covar,maxdist,guessa,lock,istop=50,p
 #Check to see if it is a gstat object
 if(!is.list(g)&&class(g)[1]!="gstat")stop("variable g is not a gstat object")
 #Check to see if there is two variables in the gstat object
-if(length(g)>5)stop("you do not have 2 variables you need ",length(g)-5, " more variables for this function to work")
-if(length(g)<5)stop("you do not have 2 variables you need ",length(g)-5, " more variables for this function to work")
+if(length(g)>3)stop("you do not have 2 variables you need ",length(g)-5, " more variables for this function to work")
+if(length(g)<3)stop("you do not have 2 variables you need ",length(g)-5, " more variables for this function to work")
 ### is v a variogram with the same variables as g
 #Check that there is three variables in v
 if(length(levels(v$id))!=3)stop("You do not have enough variables in v.")
 #Check that the variables are in the right order as g
-if(levels(v$id)[2]!=names(model$g)[4]||levels(v$id)[3]!=names(model$g)[5])stop(" v is not the same as g")
+if(levels(v$id)[2]!=names(g$data)[2]||levels(v$id)[3]!=names(g$data)[1])stop(" v is not the same as g")
 ### is wgt between 1 and 4
 if(wgt!=1)if(wgt!=2)if(wgt!=3)if(wgt!=4)stop("wgt is incorrect. Options are from 1,2,3,4.")
 ### is icvp 1 or 2
@@ -52,13 +52,8 @@ if(icvp!=1)if(icvp!=0)stop("icvp is incorrect. It must be 1 or 0.")
 if(cpar<0)stop("your cooling parameter is incorrect it must be >0")
 ### modtyp between 1 and 8
 if(modtyp!=1)if(modtyp!=2)if(modtyp!=3)if(modtyp!=4)if(modtyp!=5)if(modtyp!=6)if(modtyp!=7)if(modtyp!=8)stop("your modtyp value is incorrect it must be between 1 and 8")
-### covar is the right structure (i.e. is 1,2 the same as 2,1 and a 2,2 matrix)
-#Check the size of covar
-if(nrow(covar)!=2||ncol(covar)!=2)stop("covar is incorrect it must be a 2*2 matrix")
-#Check the cross variogram parameters are the same
-if(covar[1,2]!=covar[2,1])stop("your Cross variogarm parameter is incorrect")
-### is maxdist positive
-if(maxdist<0)stop("maxdist must be greater than 0")
+### covar must be 3 in length and numeric
+if(class(covar)!="numeric")if(length(covar)!=3)stop("variable covar must be numeric and of length 3")
 ### is guessa two variables and if modtyp is 5 or less do they both equal each other
 if(length(guessa)<0)stop("no guessa provided.")
 if(length(guessa)>2)stop("guessa is too long, it must be either 1 or 2 in length.")
@@ -70,8 +65,7 @@ if(length(guessa)==2&&modtyp<=5){
 }
 
 ### is lock 1 or 0
-if(lock!=0)stop("lock must be either 1 or 0")
-if(lock!=1)stop("lock must be either 1 or 0")
+if(lock!=0)if(lock!=1)stop("lock must be either 1 or 0")
 ### is istop a integer greater than 0
 #Check that it is an integer
 if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
@@ -100,6 +94,8 @@ if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
 ###	Declare the variables
 
 ### set nolags based on inputed semvariance data.
+	covar=matrix(c(covar[1],covar[2],covar[2],covar[3]),c(2,2))
+	maxdist=v$dist[nrow(v)]
 	semvar=semVar(v)
 	nolags=matrix(c(length(semvar[,1]),length(semvar[,1]),length(semvar[,1])))
 	nvar=2
