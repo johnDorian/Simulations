@@ -86,7 +86,7 @@ save(file="lmcr.Rdata",model)
 #####Simulation zeit###
 ####Get the data organised...
 ###Make a grid for simulation. (In this example I want an hourly grid using days as the units for the x column and a constant 1 for the y column.
-x=(seq(1,148920)-1)*0.04166667
+x=(seq(1,100)-1)*0.04166667
 simulation.grid <-data.frame(x=x,y=1)
 ##Tell the gstat package the coordinates of the simulation.grid object
 coordinates(simulation.grid)=~x+y
@@ -99,7 +99,7 @@ model$g$TP$dummy=TRUE
 ###Run the simulation using the gstat model from the lmcr function using the simulation grid to simulate to and nsim=no of simulations to perform.
 
 system.time(
-sim1 <- predict(model$g,simulation.grid,nsim=1)
+sim1 <- parallel(predict(model$g,simulation.grid,nsim=1))
 )
 ###Now see if all this has worked
 par(mfrow=c(2,1))

@@ -1,0 +1,223 @@
+grf                    package:geoR                    R Documentation
+
+_S_i_m_u_l_a_t_i_o_n _o_f _G_a_u_s_s_i_a_n _R_a_n_d_o_m _F_i_e_l_d_s
+
+_D_e_s_c_r_i_p_t_i_o_n:
+
+     ‘grf()’ generates (unconditional) simulations of Gaussian random
+     fields for given covariance parameters.  ‘geoR2RF’ converts model
+     specification used by ‘geoR’ to the correponding one in
+     ‘RandomFields’.
+
+_U_s_a_g_e:
+
+     grf(n, grid = "irreg", nx, ny, xlims = c(0, 1), ylims = c(0, 1),
+         borders, nsim = 1, cov.model = "matern",
+         cov.pars = stop("missing covariance parameters sigmasq and phi"), 
+         kappa = 0.5, nugget = 0, lambda = 1, aniso.pars,
+         mean = 0, method, RF=TRUE, messages)
+     
+     geoR2RF(cov.model, cov.pars, nugget = 0, kappa, aniso.pars)
+     
+_A_r_g_u_m_e_n_t_s:
+
+       n: number of points (spatial locations) in each simulations.
+
+    grid: optional. An n x 2 matrix with coordinates of the simulated
+          data.
+
+      nx: optional. Number of points in the X direction.
+
+      ny: optional. Number of points in the Y direction.
+
+   xlims: optional. Limits of the area in the X direction. Defaults to
+          [0,1].
+
+   ylims: optional. Limits of the area in the Y direction.  Defaults to
+          [0,1].
+
+ borders: optional. Typically a two coluns matrix especifying a
+          polygon. See DETAILS below.
+
+    nsim: Number of simulations. Defaults to 1.
+
+cov.model: correlation function. See ‘cov.spatial’ for further details.
+          Defaults to the _exponential_ model.
+
+cov.pars: a vector with 2 elements or an n x 2 matrix with values of
+          the covariance parameters sigma^2 (partial sill) and phi
+          (range parameter). If a vector, the elements are the values
+          of sigma^2 and phi, respectively.  If a matrix, corresponding
+          to a model with several structures, the values of sigma^2 are
+          in the first column and the values of phi are in the second.
+
+   kappa: additional smoothness parameter required only for the
+          following correlation functions: ‘"matern"’,
+          ‘"powered.exponential"’, ‘"cauchy"’ and ‘"gneiting.matern"’.
+          More details on the documentation for the function
+          ‘cov.spatial’.
+
+  nugget: the value of the nugget effect parameter tau^2.
+
+  lambda: value of the Box-Cox transformation parameter. The value
+          lambda = 1 corresponds to no transformation, the default.
+          For any other value of lambda Gaussian data is simulated and
+          then transformed.
+
+aniso.pars: geometric anisotropy parameters. By default an isotropic
+          field is assumed and this argument is ignored.  If a vector
+          with 2 values is provided, with values for the anisotropy
+          angle psi_A (in radians) and anisotropy ratio psi_A, the
+          coordinates are transformed, the simulation is performed on
+          the isotropic (transformed) space and then the coordinates
+          are back-transformed such that the resulting field is
+          anisotropic. Coordinates transformation is performed by the
+          function ‘coords.aniso’.
+
+    mean: a numerical vector of size 1 or the sema dimention of the
+          data to be simulated.
+
+  method: simulation method with options for ‘"cholesky"’, ‘"svd"’,
+          ‘"eigen"’, ‘"RF"’.  Defaults to the _Cholesky_ decomposition.
+          See section ‘DETAILS’ below.
+
+      RF: logical, with defaults to TRUE, indicating whether the
+          algorithm should try to use the function ‘GaussRF’ from the
+          package ‘RandomFields’ in case of ‘method’ is missing and the
+          number of points is greater than 500.
+
+messages: logical, indicating whether or not status messages are
+          printed on the screen (or output device) while the function
+          is running. Defaults to ‘TRUE’.
+
+_D_e_t_a_i_l_s:
+
+     For the methods ‘"cholesky"’, ‘"svd"’ and ‘"eigen"’ the simulation
+     consists of multiplying a vector of standardized normal deviates
+     by a square root of the covariance matrix.  The square root of a
+     matrix is not uniquely defined. These three methods differs in the
+     way they compute the square root of the (positive definite)
+     covariance matrix.
+
+     The previously available method ‘method = "circular.embedding"’ is
+     no longer available in ‘geoR’. For simulations in a fine grid
+     and/or with a large number of points use the package
+     ‘RandomFields’.
+
+     The option ‘"RF"’ calls internally the function ‘GaussRF’ from the
+     package ‘RandomFields’.
+
+     The argument ‘borders’, if provides takes a polygon data set
+     following argument ‘poly’ for the ‘splancs’' function ‘csr’, in
+     case of ‘grid="reg"’ or ‘gridpts’, in case of ‘grid="irreg"’. For
+     the latter the simulation will have _approximately_ “n” points.
+
+_V_a_l_u_e:
+
+     ‘grf’ returns a list with the components:
+
+  coords: an n x 2 matrix with the coordinates of the simulated data.
+
+    data: a vector (if ‘nsim = 1’) or a matrix with the simulated
+          values. For the latter each column corresponds to one
+          simulation.
+
+cov.model: a string with the name of the correlation function.
+
+  nugget: the value of the nugget parameter.
+
+cov.pars: a vector with the values of sigma^2 and phi, respectively.
+
+   kappa: value of the parameter kappa.
+
+  lambda: value of the Box-Cox transformation parameter lambda.
+
+aniso.pars: a vector with values of the anisotropy parameters, if
+          provided in the function call.
+
+  method: a string with the name of the simulation method used.
+
+ sim.dim: a string "1d" or "2d" indicating the spatial dimension of the
+          simulation.
+
+.Random.seed: the random seed by the time the function was called.
+
+messages: messages produced by the function describing the simulation.
+
+    call: the function call.
+     ‘geoR2grf’ returns a list with the components:
+
+   model: ‘RandomFields’ name of the correlation model
+
+   param: ‘RandomFields’ parameter vector
+
+_A_u_t_h_o_r(_s):
+
+     Paulo Justiniano Ribeiro Jr. <email: paulojus@leg.ufpr.br>,
+     Peter J. Diggle <email: p.diggle@lancaster.ac.uk>.
+
+_R_e_f_e_r_e_n_c_e_s:
+
+     Wood, A.T.A. and Chan, G. (1994) Simulation of stationary Gaussian
+     process in [0,1]^d.  _Journal of Computatinal and Graphical
+     Statistics_, *3*, 409-432.
+
+     Schlather, M. (1999) _Introduction to positive definite functions
+     and to unconditional simulation of random fields_. Tech. Report
+     ST-99-10, Dept Maths and Stats, Lancaster University.
+
+     Schlather, M. ‘RandomFields’: _Simulation and Analysis of Random
+     Fields_. R package. <URL: http://www.cu.lu/~schlathe>.
+
+     Schlather, M. (2001) _Simulation and Analysis of Random Fields_.
+     R-News *1* (2), p. 18-20.
+
+     Further information on the package ‘geoR’ can be found at:
+     <URL: http://www.leg.ufpr.br/geoR>.
+
+_S_e_e _A_l_s_o:
+
+     ‘plot.grf’ and ‘image.grf’ for graphical output, ‘coords.aniso’
+     for anisotropy coordinates transformation and, ‘chol’, ‘svd’ and
+     ‘eigen’ for methods of matrix decomposition and ‘GaussRF’ function
+     in the package ‘RandomFields’.
+
+_E_x_a_m_p_l_e_s:
+
+     sim1 <- grf(100, cov.pars = c(1, .25))
+     # a display of simulated locations and values
+     points(sim1)   
+     # empirical and theoretical variograms
+     plot(sim1)
+     #
+     # a "smallish" simulation
+     sim2 <- grf(441, grid = "reg", cov.pars = c(1, .25)) 
+     image(sim2)
+     ##
+     ## 1-D simulations using the same seed and different noise/signal ratios
+     ##
+     set.seed(234)
+     sim11 <- grf(100, ny=1, cov.pars=c(1, 0.25), nug=0)
+     set.seed(234)
+     sim12 <- grf(100, ny=1, cov.pars=c(0.75, 0.25), nug=0.25)
+     set.seed(234)
+     sim13 <- grf(100, ny=1, cov.pars=c(0.5, 0.25), nug=0.5)
+     ##
+     par.ori <- par(no.readonly = TRUE)
+     par(mfrow=c(3,1), mar=c(3,3,.5,.5))
+     yl <- range(c(sim11$data, sim12$data, sim13$data))
+     image(sim11, type="l", ylim=yl)
+     image(sim12, type="l", ylim=yl)
+     image(sim13, type="l", ylim=yl)
+     par(par.ori)
+     
+     ## simulating within borders
+     data(parana)
+     pr1 <- grf(100, cov.pars=c(200, 40), borders=parana$borders, mean=500)
+     points(pr1)
+     pr1 <- grf(100, grid="reg", cov.pars=c(200, 40), borders=parana$borders)
+     points(pr1)
+     pr1 <- grf(100, grid="reg", nx=10, ny=5, cov.pars=c(200, 40), borders=parana$borders)
+     points(pr1)
+     
+

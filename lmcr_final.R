@@ -30,17 +30,17 @@ head(data)
 data <- subset(data,!is.nan(data)&!is.na(data))
 data <- data.frame(X=data[,3],Y=1,TP=data[,2],FLOW=data[,1])
 head(data)
-flow.lambda <- boxcox.fit(data$FLOW+0.1)$lambda
+flow.lambda <- boxcox.fit(data$FLOW+0.01)$lambda
 tp.lambda <- boxcox.fit(data$TP+0.001)$lambda
 ### Transform the data using a log scale transformation.
-data$TP <- bct(data$TP+0.001,boxcox.fit(data$TP+0.001)$lambda)
-data$FLOW <- bct(data$FLOW+0.1,boxcox.fit(data$FLOW+0.1)$lambda)
+data$TP <- bct(data$TP+0.001,tp.lambda)
+data$FLOW <- bct(data$FLOW+0.01,flow.lambda)
 
 ### Create gstat object of the data
 spdf <- SpatialPointsDataFrame(data[,1:2],data)
 ### Create A gstat object with TP and flow.
-g = gstat(NULL, "TP", TP ~ 1,spdf,maxdist=200,dummy=TRUE,beta=-0.105761)
-g = gstat(g, "FLOW", FLOW ~ 1,spdf,maxdist=200,dummy=TRUE,beta=10.163)
+g = gstat(NULL, "TP", TP ~ 1,spdf,maxdist=200,dummy=TRUE,beta=mean(data$TP))
+g = gstat(g, "FLOW", FLOW ~ 1,spdf,maxdist=200,dummy=TRUE,beta=mean(data$FLOW))
 
 
 ### Create cross and auto variograms of the gstat object, using width to set the bins.
@@ -53,16 +53,16 @@ plot(v)
 ############################################################
 
 ### Set the temperature of the annealing process. See Lark 2003 for more details.
-cpar=10000
+cpar=30000
 ### Set the model type that is desired. See the gammah function for a translation. ONLY 4 HAS BEEN TESTED (exp). The others should work.
 modtyp=4 
 ### Get the gstat estimated values of the variogram structure to initialise the lmcr.
 ### Order from gstat object is second variable, cross, cross, first variable.
-covar<-c(50,0.3,0.002)
+covar<-c(30,0.05,0.002)
 ### Now for the guesses. (You have to give the distance twice as the function also handles a double exp model). This dosent effect the results
 guessa<-50
 ### Run the lmcr function
-model<-lmcr(g,v,wgt,covar,guessa)
+model<-lmcr(g,v,covar,guessa,modtyp,cpar)
 ### Check out the results of the fit. 
 plot(model$variogram,model$g)
 ### Now check the positive defitive of the results (i.e that the det is >0)
@@ -77,20 +77,10 @@ save(file="lmcr.Rdata",model)
 #####Simulation zeit###
 ####Get the data organised...
 ###Make a grid for simulation. (In this example I want an hourly grid using days as the units for the x column and a constant 1 for the y column.
-x=(seq(1,1000)-1)*0.04166667
-simulation.grid <-data.frame(x=x,y=1)
-##Tell the gstat package the coordinates of the simulation.grid object
-coordinates(simulation.grid)=~x+y
-###Add the means of the calibration dataset (obtained from summary(spdf)). - for unconditional simulation.
-model$g$data$FLOW$beta=10.163
-model$g$data$TP$beta=-0.105761
-###Set the data to dummy in the gstat object  - implies that unconditional simulation is to be performed.
-model$g$FLOW$dummy=TRUE
-model$g$TP$dummy=TRUE
+x=(seq(1,700)-1)*0.04166667
 ###Run the simulation using the gstat model from the lmcr function using the simulation grid to simulate to and nsim=no of simulations to perform.
-system.time(
-sim1 <- predict(model$g,simulation.grid,nsim=1)
-)
+f<-GaussRF(x=x, model="exp",param=c(mean(data$TP),9.533031e-04 ,3.987555e-06),n=1000)
+
 ###Now see if all this has worked
 par(mfrow=c(2,1))
 plot(sim1$FLOW.sim1,type="l",ylab="FLOW")

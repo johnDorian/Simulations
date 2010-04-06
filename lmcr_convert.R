@@ -485,7 +485,7 @@ if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
 	results$other.its=as.numeric(d.ics[,1])
 	results$other.its=results$other.ics[-1]
 	results$other.wss=as.numeric(d.f[,1])
-	results$other.wss=results$other.f[-1]
+	results$other.wss=results$other.wss[-1]
 	results$other.pacc=as.numeric(d.pacc[,1])
 	results$other.pacc=results$other.pacc[-1]
 ############################################
