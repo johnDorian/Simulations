@@ -732,5 +732,37 @@ gammah<-function(h,modtyp,co,c1,a1,c2,a2){
 		bro=return(co*h^a1)
 	)
 }
-		
+######################################################################################################
+################################### The fiting FUNCTION ##############################################
+######################################################################################################
+###This function is for solving the values for simulation. See Tom's 2006 draft for more detials (eq. 17)
+fiting<-function(object){
+	require(BB)
+	##Define the function of the 3 simultaneuos equations
+	f<-function(x,ini.pars){
+		a11<-x[1]
+		a12<-x[2]
+		a22<-x[3]
+		b<-rep(NA,3)
+		b[1]<-a11*a11+a12*a12-ini.pars[1]
+		b[2]<-a22*a22+a12*a12-ini.pars[3]
+		b[3]<-a11*a12+a22*a12-ini.pars[2]
+		b
+	}
+	##Use the BB package to fit the equations. Within repeat loop, to make sure the requirements are met.
+	repeat{
+		x0<-rnorm(3)
+		temp<-BBsolve(par=x0,fn=f,ini.pars=object,quiet=TRUE)
+		##Make sure a solution was found
+		if(temp$convergence==0){
+			##Put the solution into a matrix
+			res<-matrix(c(temp$par[1],0,temp$par[3],temp$par[2]),c(2,2))
+			if(det(res)>=0&&min(res)>=0){
+				return(res)
+			}
+		}
+	}
+}
+
+
 		
