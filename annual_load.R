@@ -131,3 +131,46 @@ adj_part_no=0
 	save(routineFinal,file=paste("~/Documents/code/Simulations/temp_results/routinefinal_part",part_no,".Rdata",sep=""))
 }
 
+
+
+
+####Now i have to add an extra bit of code to join them al up into two files. one for routine and one for event.
+##cbind works for the first two, but not for the last one - use matrix to fix it up.
+load(paste("~/Documents/code/Simulations/temp_results/eventfinal_part1.Rdata",sep=""))
+temp<-eventFinal
+for(part_no in 2:10){
+	load(paste("~/Documents/code/Simulations/temp_results/eventfinal_part",part_no,".Rdata",sep=""))
+	temp[[1]]<-cbind(temp[[1]],eventFinal[[1]])
+	temp[[2]]<-cbind(temp[[2]],eventFinal[[2]])
+	temp[[3]]<-cbind(temp[[3]],eventFinal[[3]])
+}
+temp[[3]]<-matrix(temp[[3]],ncol=1)
+eventFinalAll<-temp
+save(eventFinalAll,file="~/Documents/code/Simulations/temp_results/eventFinalAll.Rdata")
+
+
+##Routine
+load(paste("~/Documents/code/Simulations/temp_results/routinefinal_part1.Rdata",sep=""))
+temp<-routineFinal
+for(part_no in 2:5){
+	load(paste("~/Documents/code/Simulations/temp_results/routinefinal_part",part_no,".Rdata",sep=""))
+	temp[[1]]<-cbind(temp[[1]],routineFinal[[1]])
+	temp[[2]]<-cbind(temp[[2]],routineFinal[[2]])
+	temp[[3]]<-cbind(temp[[3]],routineFinal[[3]])
+}
+temp[[3]]<-matrix(temp[[3]],ncol=1)
+routineFinalAll<-temp
+save(routineFinalAll,file="~/Documents/code/Simulations/temp_results/routineFinalAll.Rdata")
+
+
+
+###Just for kicks
+load("~/Documents/code/Simulations/temp_results/eventFinalAll.Rdata")
+load("~/Documents/code/Simulations/temp_results/routineFinalAll.Rdata")
+hist(eventFinalAll[[3]]/1000)
+dev.new()
+hist(routineFinalAll[[3]]/1000)
+
+summary(eventFinalAll[[3]]/1000)
+summary(routineFinalAll[[3]]/1000)
+
