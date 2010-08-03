@@ -1,4 +1,6 @@
-This repo is for fitting lmcr's to water quality data, thorugh time.
+This folder has three main scripts.
 
-
-		The lmcr.R script is the main script.
+lmcr_final.R $$$ this is the main script. It starts from scratch and makes the simulated data. It currently contains the info to produce the summary of the routine likfit models. And the code to cross validate the simulated data using gstat to produce 100 lmcr variograms.
+annual_load.R $$$ this script will run through all the final predicted objects, and produce some nice RMSE values for me.
+routine_prediction.R $$$ this script will go through and either krig or use an linear model to predict tp. This is the base script for the subsetted files.
+kriging_zeit.R $$$ This is the base script for the kriging of the event sampled data.
