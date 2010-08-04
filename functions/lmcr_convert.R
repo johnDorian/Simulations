@@ -27,7 +27,7 @@
 ###DATAF is (nvar,nvar, 3 [h,gamma,npairs,st. dev of gamma at h], nlag [lines]).
 
 
-lmcr<-function(g,v,covar,guessa,modtyp,cpar,wgt=1,icvp=1,lock=0,istop=50,plot.wss.change=TRUE){
+lmcr<-function(g,v,covar,guessa,modtyp,cpar,wgt=1,icvp=1,lock=0,istop=50,alp=0.975,nmarkcov=60,plot.wss.change=TRUE){
 	
 
 
@@ -69,9 +69,15 @@ if(lock!=0)if(lock!=1)stop("lock must be either 1 or 0")
 ### is istop a integer greater than 0
 #Check that it is an integer
 if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
-### is plot.. true or false
 
-
+###Check the alp temperature cooling parameter
+alp=0.975
+if(length(alp)<1)stop("alp must be supplied") else if(length(alp)>1)stop("alp must be of length 1")
+if(!is.numeric(alp))stop("alp must be numeric")
+if(alp>=1||alp<=0)stop("alp must be between 0 and 1")
+###Check the nmarkcov parameter
+if(length(nmarkcov)<1)stop("alp must be supplied") else if(length(nmarkcov)>1)stop("alp must be of length 1")
+if(!is.numeric(nmarkcov))stop("alp must be numeric")
 
 
 ### g is a gstat object with both auto variables.
@@ -257,8 +263,8 @@ if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
 
 
 
-	alp=0.975
-	nmarkov=60
+	
+	
 	iwopt=wgt
 
 	f<-fcn(modtyp,nlags,dataf,sd,nstr,nvar,a,c,iwopt)
@@ -266,7 +272,7 @@ if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
 	message('Weighted sum-of-squares of guessed parameters is:',f)
 	message("")
 	results<-list(WSSGuessedParameter=f,initialTemperature=cpar,coolingParameter=alp,
-	numberTrialMarkovChain=nmarkov,numberMarkovChainReturningNoChange=istop,weightingOption=iwopt)
+	numberTrialMarkovChain=nmarkcov,numberMarkovChainReturningNoChange=istop,weightingOption=iwopt)
 
 ###	**************************************************************************************************
 
@@ -299,7 +305,7 @@ if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
 		acc=0
 
 ###		Iterate within the step.
-		for(imc in 1:nmarkov){
+		for(imc in 1:nmarkcov){
 
 ###			Adjust each parameter in turn.
 
@@ -443,22 +449,22 @@ if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
 
 			if(ics==1){
 				message(' ')
-				message('Proportion of changes accepted in 1st chain: ',paccin)
+				message('Proportion of changes accepted in 1st chain: ',round(paccin,digits=3))
 				message(' ')
 				message('(Between 0.90-0.99 is optimal. If equal to one, reject')
 				message('and decrease the initial temperature. If less than 0.9,')
 				message('reject and increase the initial temperature).')
-				iconto<-as.numeric(readline('To accept press 0. to exit press 1'))
-
-				if(iconto==0){
+				#iconto<-as.numeric(readline('To accept press 0. to exit press 1'))
+				iconto<-as.character(readline('Accept inital temperature settings (y/n)? '))
+				if(tolower(iconto)=="y"){
 					message("")
 					message("Minimising weighted sum-of-squares")
 					message("(please be patient)...")
 					message("")
-					message("Warning: (Closing Graphics device will quit process)")
+					#message("Warning: (Closing Graphics device will quit process)") #This should be fixed now
 					
 				}else{
-					if(iconto==1)return(cat("Try Changing cpar and try again\n"))
+					if(tolower(iconto)=="n")return(cat("Try Changing cpar and try again\n"))
 				}
 			}
 		}
@@ -470,9 +476,13 @@ if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
 ###		and 'pacc' is how much it has changed since the last time.
 		if(plot.wss.change==TRUE){
 			if(ics==1)plot(ics,f,ylim=c(0,f*1.2),xlim=c(0,2000),cex=0.5,xlab="Perturbations",ylab="WSS")
-			if(ics>1){
-				points(ics,f,cex=0.5)
-				legend("topright",paste("WSS= ",f),bg="white",box.col="white")
+			if(ics>1&&dev.cur()==1){
+					plot(ics,f,ylim=c(0,f*1.2),xlim=c(0,2000),cex=0.5,xlab="Perturbations",ylab="WSS")
+			}else{
+				if(ics>1){
+					points(ics,f,cex=0.5)
+					legend("topright",paste("WSS= ",round(f,digits=3)),bg="white",box.col="white")
+				}
 			}
 		}
 		d.f<-rbind(d.f,f)
@@ -510,9 +520,10 @@ if(istop!=floor(istop)||istop<0)stop("istop must be an integer greater than 0")
 		}
 		for(ir in 1:nvar){
 			for(ic in ir:nvar){
-				if(istr>0){				
-					message(ir,ic,c[istr+1,ir,ic])
-				}
+			#This section is commented out, as I'm unsure what the purpose is... All it does is print three values at the end of the annealing.
+			#	if(istr>0){				
+			#		message(ir,ic,c[istr+1,ir,ic])
+			#	}
 				d.ir=rbind(d.ir,ir)
 				d.ic=rbind(d.ic,ic)
 				d.c=rbind(d.c,c[istr+1,ir,ic])
