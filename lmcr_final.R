@@ -15,10 +15,8 @@
 ### TODO:  Once everthing is working to merge this with the lmcr.R script.######
 ################################################################################
 
-### Set the working directory
-setwd("~/Documents/code/Simulations/")
 ### Load the datasets.
-load("tp_flow_krige.Rdata")
+load("~/Documents/code/Simulations/data/raw_data/tp_flow_krige.Rdata")
 ### Load the gstat library
 library(gstat);library(TeachingDemos);library(geoR)
 ### Load the lmcr functions - from script.
