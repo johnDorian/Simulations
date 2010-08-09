@@ -335,8 +335,8 @@ sampleHour<-c(0,3,3,3,6,6,6,6,12,12,12,12)
 for(file in 1:10){
 	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/flow/simulatedFlow",file,".Rdata",sep=""))
 	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simulatedTP",file,".Rdata",sep=""))
-	load(paste("~/Documents/code/Simulations/data/simulated_sampled_data/routineFlowpart",file,".Rdata",sep=""))
-	load(paste("~/Documents/code/Simulations/data/simulated_sampled_data/routineTPpart",file,".Rdata",sep=""))
+	load(paste("~/Documents/code/Simulations/data/simulated_sampled_data/routine/routineFlowpart",file,".Rdata",sep=""))
+	load(paste("~/Documents/code/Simulations/data/simulated_sampled_data/routine/routineTPpart",file,".Rdata",sep=""))
 
 	for(realisation in 1:250){
 		###Create a height object from the above model
@@ -383,7 +383,7 @@ for(file in 1:10){
 		eventData[[realisation]]<-tempfinal
 		print(realisation)
 	}
-	save(eventData,file=paste("~/Documents/code/Simulations/data/simulated_sampled_data/event/eventDatapart",file,".Rdata"))
+	save(eventData,file=paste("~/Documents/code/Simulations/data/simulated_sampled_data/event/eventDatapart",file,".Rdata",sep=""))
 }
 
 ###This section doesn't work as all the samples are seperated now.
