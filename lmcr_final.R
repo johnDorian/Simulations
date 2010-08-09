@@ -69,7 +69,9 @@ model$c[5]/(sqrt(model$c[4]*model$c[6]))
 # 0.5749334
 ### Save the results. (Just so I don't need to do all this again).
 save(file="lmcr.Rdata",model)
-load("lmcr.Rdata")
+
+
+load("~/Documents/code/Simulations/data/lmcr_model/lmcr.Rdata")
 
 
 #####Simulation zeit###
@@ -87,7 +89,7 @@ grid=cbind(x,1)
   
 ###Find the a values for the sill and the nugget using the function 'fiting'
 ###for the sill - with the order of results a11 = flow, a12 = cross, a21 = cross and a22= tp
-source('fiting.R')
+source('~/Documents/code/Simulations/functions/fiting.R')
 a1<-fiting(model$gstat)
 ###And now the nugget
 a0<-fiting(model$gstat,parm="nugget")
@@ -104,378 +106,184 @@ rm(sill.2)
 gc()
 
 
+##############REDO EVERYTHING FROM HERE 9/08/2010...
 
 
+load("~/Documents/code/Simulations/data/simulated_raw/sills/sill1.Rdata")
+start=seq(1,2251,250)
+end=seq(250,2500,250)
 
-load("sill1.Rdata")
-
-temp1<-sill.1[,1:500]
-save(temp1,file="silltemp1.Rdata")
-rm(temp1)
-gc()
-
-temp2<-sill.1[,501:1000]
-save(temp2,file="silltemp2.Rdata")
-rm(temp2)
-gc()
-
-temp3<-sill.1[,1001:1500]
-save(temp3,file="silltemp3.Rdata")
-rm(temp3)
-gc()
-
-temp4<-sill.1[,1501:2000]
-save(temp4,file="silltemp4.Rdata")
-rm(temp4)
-gc()
-
-temp5<-sill.1[,2001:2500]
-save(temp5,file="silltemp5.Rdata")
-rm(temp5)
-gc()
+for(i in 1:length(start)){
+	temp<-sill.1[,start[i]:end[i]]
+	save(temp,file=paste("~/Documents/code/Simulations/data/simulated_raw/sills/sill1temp",i,".Rdata",sep=""))
+	rm(temp)
+	gc()
+}
 rm(sill.1)
 gc()
 
-load("sill2.Rdata")
-
-temp1<-sill.2[,1:500]
-save(temp1,file="sill2temp1.Rdata")
-rm(temp1)
-gc()
-
-temp2<-sill.2[,501:1000]
-save(temp2,file="sill2temp2.Rdata")
-rm(temp2)
-gc()
-
-temp3<-sill.2[,1001:1500]
-save(temp3,file="sill2temp3.Rdata")
-rm(temp3)
-gc()
-
-temp4<-sill.2[,1501:2000]
-save(temp4,file="sill2temp4.Rdata")
-rm(temp4)
-gc()
-
-temp5<-sill.2[,2001:2500]
-save(temp5,file="sill2temp5.Rdata")
-rm(temp5)
-gc()
+load("~/Documents/code/Simulations/data/simulated_raw/sills/sill2.Rdata")
+for(i in 1:length(start)){
+	temp<-sill.2[,start[i]:end[i]]
+	save(temp,file=paste("~/Documents/code/Simulations/data/simulated_raw/sills/sill2temp",i,".Rdata",sep=""))
+	rm(temp)
+	gc()
+}
 rm(sill.2)
 gc()
 
+sim=24*365*20
+no.sim=2500
+nug.1<-rnorm(sim*no.sim)
+
+start=seq(1,((length(nug.1)-sim)+1),sim*250)
+end=seq(sim*250,length(nug.1),sim*250)
 
 
-nug.1<-matrix(rnorm(sim*no.sim),ncol=no.sim,nrow=sim)
-temp1<-nug.1[,1:500]
-save(temp1,file="nugtemp1.Rdata")
-rm(temp1)
-gc()
-
-temp2<-nug.1[,501:1000]
-save(temp2,file="nugtemp2.Rdata")
-rm(temp2)
-gc()
-
-temp3<-nug.1[,1001:1500]
-save(temp3,file="nugtemp3.Rdata")
-rm(temp3)
-gc()
-
-temp4<-nug.1[,1501:2000]
-save(temp4,file="nugtemp4.Rdata")
-rm(temp4)
-gc()
-
-temp5<-nug.1[,2001:2500]
-save(temp5,file="nugtemp5.Rdata")
-rm(temp5)
-gc()
-
+for(i in 1:length(start)){
+	temp<-matrix(nug.1[start[i]:end[i]],ncol=250)
+	save(temp,file=paste("~/Documents/code/Simulations/data/simulated_raw/nuggets/nug1temp",i,".Rdata",sep=""))
+	rm(temp)
+	gc()
+}
 rm(nug.1)
 gc()
 
-nug.2<-matrix(rnorm(sim*no.sim),ncol=no.sim,nrow=sim)
-temp1<-nug.2[,1:500]
-save(temp1,file="nug2temp1.Rdata")
-rm(temp1)
-gc()
-
-temp2<-nug.2[,501:1000]
-save(temp2,file="nug2temp2.Rdata")
-rm(temp2)
-gc()
-
-temp3<-nug.2[,1001:1500]
-save(temp3,file="nug2temp3.Rdata")
-rm(temp3)
-gc()
-
-temp4<-nug.2[,1501:2000]
-save(temp4,file="nug2temp4.Rdata")
-rm(temp4)
-gc()
-
-temp5<-nug.2[,2001:2500]
-save(temp5,file="nug2temp5.Rdata")
-rm(temp5)
-gc()
-
+nug.2<-rnorm(sim*no.sim)
+for(i in 1:length(start)){
+	temp<-matrix(nug.2[start[i]:end[i]],ncol=250)
+	save(temp,file=paste("~/Documents/code/Simulations/data/simulated_raw/nuggets/nug2temp",i,".Rdata",sep=""))
+	rm(temp)
+	gc()
+}
 rm(nug.2)
 gc()
 
+############# Create the simulations...
+for(i in 1:10){
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/sills/sill1temp",i,".Rdata",sep=""))
+	sill.1<-temp
+	gc()
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/sills/sill2temp",i,".Rdata",sep=""))
+	sill.2<-temp
+	gc()
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/nuggets/nug1temp",i,".Rdata",sep=""))
+	nug.1<-temp
+	gc()
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/nuggets/nug2temp",i,".Rdata",sep=""))
+	nug.2<-temp
+	gc()
 
+	sim.tp<-a0[1,1]*nug.1+a0[1,2]*nug.2+a1[1,1]*sill.1+a1[1,2]*sill.2+mean(data$TP)
+	save(sim.tp,file=paste("~/Documents/code/Simulations/data/simulated_raw/simtp/simtp",i,".Rdata",sep=""))
+	rm(sim.tp)
+	gc()
+	sim.flow<-a0[2,1]*nug.1+a0[2,2]*nug.2+a1[2,1]*sill.1+a1[2,2]*sill.2+mean(data$FLOW)
+	save(sim.flow,file=paste("~/Documents/code/Simulations/data/simulated_raw/simflow/simflow",i,".Rdata",sep=""))
+	rm(sim.flow)
 
-
-##############
-
-
-
-
-load("silltemp1.Rdata")
-sill.1<-temp1
-gc()
-load("sill2temp1.Rdata")
-sill.2<-temp1
-gc()
-load('nugtemp1.Rdata')
-nug.1<-temp1
-gc()
-load('nug2temp1.Rdata')
-nug.2<-temp1
-gc()
-
-
-sim.tp<-a0[1,1]*nug.1+a0[1,2]*nug.2+a1[1,1]*sill.1+a1[1,2]*sill.2+mean(data$TP)
-save(sim.tp,file="simtp1.Rdata")
-rm(sim.tp)
-gc()
-sim.flow<-a0[2,1]*nug.1+a0[2,2]*nug.2+a1[2,1]*sill.1+a1[2,2]*sill.2+mean(data$FLOW)
-save(sim.flow,file="simflow1.Rdata")
-rm(sim.flow)
-gc()
-rm(tp.sill)
-rm(flow.sill)
-rm(nug.tp)
-rm(nug.flow)
-gc()
-
-
-
-
-load("silltemp2.Rdata")
-sill.1<-temp2
-gc()
-load("sill2temp2.Rdata")
-sill.2<-temp2
-gc()
-load('nugtemp2.Rdata')
-nug.1<-temp2
-gc()
-load('nug2temp2.Rdata')
-nug.2<-temp2
-gc()
-
-
-sim.tp<-a0[1,1]*nug.1+a0[1,2]*nug.2+a1[1,1]*sill.1+a1[1,2]*sill.2+mean(data$TP)
-save(sim.tp,file="simtp2.Rdata")
-rm(sim.tp)
-gc()
-sim.flow<-a0[2,1]*nug.1+a0[2,2]*nug.2+a1[2,1]*sill.1+a1[2,2]*sill.2+mean(data$FLOW)
-save(sim.flow,file="simflow2.Rdata")
-rm(sim.flow)
-gc()
-rm(tp.sill)
-rm(flow.sill)
-rm(nug.tp)
-rm(nug.flow)
-gc()
-
-
-
-load("silltemp3.Rdata")
-sill.1<-temp3
-gc()
-load("sill2temp3.Rdata")
-sill.2<-temp3
-gc()
-load('nugtemp3.Rdata')
-nug.1<-temp3
-gc()
-load('nug2temp3.Rdata')
-nug.2<-temp3
-gc()
-
-
-sim.tp<-a0[1,1]*nug.1+a0[1,2]*nug.2+a1[1,1]*sill.1+a1[1,2]*sill.2+mean(data$TP)
-save(sim.tp,file="simtp3.Rdata")
-rm(sim.tp)
-gc()
-sim.flow<-a0[2,1]*nug.1+a0[2,2]*nug.2+a1[2,1]*sill.1+a1[2,2]*sill.2+mean(data$FLOW)
-save(sim.flow,file="simflow3.Rdata")
-rm(sim.flow)
-gc()
-rm(tp.sill)
-rm(flow.sill)
-rm(nug.tp)
-rm(nug.flow)
-gc()
-
-
-load("silltemp4.Rdata")
-sill.1<-temp4
-gc()
-load("sill2temp4.Rdata")
-sill.2<-temp4
-gc()
-load('nugtemp4.Rdata')
-nug.1<-temp4
-gc()
-load('nug2temp4.Rdata')
-nug.2<-temp4
-gc()
-
-
-sim.tp<-a0[1,1]*nug.1+a0[1,2]*nug.2+a1[1,1]*sill.1+a1[1,2]*sill.2+mean(data$TP)
-save(sim.tp,file="simtp4.Rdata")
-rm(sim.tp)
-gc()
-sim.flow<-a0[2,1]*nug.1+a0[2,2]*nug.2+a1[2,1]*sill.1+a1[2,2]*sill.2+mean(data$FLOW)
-save(sim.flow,file="simflow4.Rdata")
-rm(sim.flow)
-gc()
-rm(tp.sill)
-rm(flow.sill)
-rm(nug.tp)
-rm(nug.flow)
-gc()
-
-
-load("silltemp5.Rdata")
-sill.1<-temp5
-gc()
-load("sill2temp5.Rdata")
-sill.2<-temp5
-gc()
-load('nugtemp5.Rdata')
-nug.1<-temp5
-gc()
-load('nug2temp5.Rdata')
-nug.2<-temp5
-gc()
-
-
-sim.tp<-a0[1,1]*nug.1+a0[1,2]*nug.2+a1[1,1]*sill.1+a1[1,2]*sill.2+mean(data$TP)
-save(sim.tp,file="simtp5.Rdata")
-rm(sim.tp)
-gc()
-sim.flow<-a0[2,1]*nug.1+a0[2,2]*nug.2+a1[2,1]*sill.1+a1[2,2]*sill.2+mean(data$FLOW)
-save(sim.flow,file="simflow5.Rdata")
-rm(sim.flow)
-gc()
-rm(tp.sill)
-rm(flow.sill)
-rm(nug.tp)
-rm(nug.flow)
-gc()
-
-
-
-
-
-
-
-
-
-
-
-
-
-###########
-
-
-
-load("simtp1.Rdata")
-temp<-sim.tp
-rm(sim.tp)
-gc()
-load("simtp2.Rdata")
-temp<-cbind(temp,sim.tp)
-rm(sim.tp)
-gc()
-load("simtp3.Rdata")
-temp<-cbind(temp,sim.tp)
-rm(sim.tp)
-gc()
-load("simtp3.Rdata")
-temp<-cbind(temp,sim.tp)
-rm(sim.tp)
-gc()
-load("simtp4.Rdata")
-sim.tp<-cbind(temp,sim.tp)
-rm(temp)
-gc()
-save(sim.tp,file="simtp.Rdata")
-rm(sim.tp)
-gc()
-
-
-load("simflow1.Rdata")
-temp<-sim.flow
-rm(sim.flow)
-gc()
-load("simflow1.Rdata")
-temp<-cbind(temp,sim.flow)
-rm(sim.flow)
-gc()
-load("simflow3.Rdata")
-temp<-cbind(temp,sim.flow)
-rm(sim.flow)
-gc()
-load("simflow4.Rdata")
-temp<-cbind(temp,sim.flow)
-rm(sim.flow)
-gc()
-load("simflow5.Rdata")
-sim.flow<-cbind(temp,sim.flow)
-rm(temp)
-gc()
-save(sim.flow,file="simflow.Rdata")
-gc()
+	rm(sill.1)
+	rm(sill.2)
+	rm(nug.1)
+	rm(nug.2)
+	gc()
+}
 
 ########################################################################
 ########BACKTRANSFORM THE SIMULATED DATA USING GEOR PACKAGE.############
 ########################################################################
-###Calculate the variance
-load("simflow.Rdata")
-sim.flow.var<-apply(sim.flow,1,var)
-###Create a list for the results
-simulatedFlow<-matrix(NA,ncol=2500,nrow=length(sim.flow.var))
-for(i in 1:2500){
-simulatedFlow[,i]<-backtransform.moments(lambda=flow.lambda,mean=sim.flow[,i],sim.flow.var)$mean
-print(i)
+
+###First section loads all the simulated flow and gets the variance of it.
+load(paste("~/Documents/code/Simulations/data/simulated_raw/simflow/simflow1.Rdata",sep=""))
+all.sim.flow1<-sim.flow[1:87600,]
+for(i in 2:10){
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/simflow/simflow",i,".Rdata",sep=""))
+	all.sim.flow1<-cbind(all.sim.flow1,sim.flow[1:87600,])
 }
 rm(sim.flow)
-rm(sim.flow.var)
 gc()
-save(simulatedFlow,file="simulatedFlow.Rdata")
-rm(simulatedFlow)
+sim.flow.var1<-apply(all.sim.flow1,1,var)
+rm(all.sim.flow1)
 gc()
-###Calculate the variance
-load("simtp.Rdata")
-sim.tp.var<-apply(sim.tp,1,var)
-###Create a list for the results
-simulatedTP<-matrix(NA,ncol=2500,nrow=length(sim.tp.var))
-for(i in 1:2500){
-simulatedTP[,i]<-backtransform.moments(lambda=tp.lambda,mean=sim.tp[,i],sim.tp.var)$mean
+
+load(paste("~/Documents/code/Simulations/data/simulated_raw/simflow/simflow1.Rdata",sep=""))
+all.sim.flow2<-sim.flow[87601:175200,]
+for(i in 2:10){
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/simflow/simflow",i,".Rdata",sep=""))
+	all.sim.flow2<-cbind(all.sim.flow2,sim.flow[87601:175200,])
+}
+rm(sim.flow)
+gc()
+sim.flow.var2<-apply(all.sim.flow2,1,var)
+rm(all.sim.flow2)
+gc()
+temp<-cbind(sim.flow.var1,sim.flow.var2)
+sim.flow.var<-matrix(temp,ncol=1)
+rm(temp)
+rm(sim.flow.var1)
+rm(sim.flow.var2)
+gc()
+
+library(geoR)
+
+
+
+####Now with the variance we can back transform all the flow
+for(i in 1:10){
+	simulatedFlow<-matrix(NA,ncol=250,nrow=(365*24*20))
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/simflow/simflow",i,".Rdata",sep=""))
+	for(real. in 1:250){
+		simulatedFlow[,real.]<-backtransform.moments(lambda=flow.lambda,mean=sim.flow[,real.],sim.flow.var)$mean
+	}
+	save(simulatedFlow,file=paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/flow/simulatedFlow",i,".Rdata",sep=""))
+	rm(simulatedFlow)
+	gc()
+}
+###Now do it all over again for tp
+load(paste("~/Documents/code/Simulations/data/simulated_raw/simtp/simtp1.Rdata",sep=""))
+all.sim.tp1<-sim.tp[1:87600,]
+for(i in 2:10){
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/simtp/simtp",i,".Rdata",sep=""))
+	all.sim.tp1<-cbind(all.sim.tp1,sim.tp[1:87600,])
 }
 rm(sim.tp)
-rm(sim.tp.var)
 gc()
-save(simulatedTP,file="simulatedTP.Rdata")
-rm(simulatedTP)
+sim.tp.var1<-apply(all.sim.tp1,1,var)
+rm(all.sim.tp1)
 gc()
+
+load(paste("~/Documents/code/Simulations/data/simulated_raw/simtp/simtp1.Rdata",sep=""))
+all.sim.tp2<-sim.tp[87601:175200,]
+for(i in 2:10){
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/simtp/simtp",i,".Rdata",sep=""))
+	all.sim.tp2<-cbind(all.sim.tp2,sim.tp[87601:175200,])
+}
+rm(sim.tp)
+gc()
+sim.tp.var2<-apply(all.sim.tp2,1,var)
+rm(all.sim.tp2)
+gc()
+temp<-cbind(sim.tp.var1,sim.tp.var2)
+sim.tp.var<-matrix(temp,ncol=1)
+rm(temp)
+rm(sim.tp.var1)
+rm(sim.tp.var2)
+gc()
+
+
+for(i in 1:10){
+	simulatedTP<-matrix(NA,ncol=250,nrow=(365*24*20))
+	load(paste("~/Documents/code/Simulations/data/simulated_raw/simtp/simtp",i,".Rdata",sep=""))
+	for(real. in 1:250){
+		simulatedTP[,real.]<-backtransform.moments(lambda=tp.lambda,mean=sim.tp[,real.],sim.tp.var)$mean
+	}
+	save(simulatedTP,file=paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simulatedTP",i,".Rdata",sep=""))
+	rm(simulatedTP)
+	gc()
+}
+
+
+
 ##############################################################################
 #### Simulate sampling of the data using event-based and routine sampling ####
 ##############################################################################
@@ -497,89 +305,101 @@ date<-rep(date,20)
 ###Create a custom time to represtent when the routine sample was taken.
 routineTime<-(1:length(date))/24
 routineTime<-routineTime[date==15.12]
+
+for(i in 1:10){
 ###Subset the simulated data on the 15th of each month at miday.
-load("simulatedTP.Rdata")
-routineTP<-simulatedTP[date==15.12,]
-save(routineTP,file="routineTP.Rdata")
-rm(simulatedTP)
-gc()
-load("simulatedFlow.Rdata")
-routineFlow<-simulatedFlow[date==15.12,]
-save(routineFlow,file="routineFlow.Rdata")
-rm(simulatedFlow)
-gc()
+	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simulatedTP",i,".Rdata",sep=""))
+	routineTP<-simulatedTP[date==15.12,]
+	save(routineFlow,file=paste("~/Documents/code/Simulations/data/simulated_sampled_data/routineTPpart",i,".Rdata",sep=""))
+	rm(simulatedTP)
+	gc()
+	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/flow/simulatedFlow",i,".Rdata",sep=""))
+	routineFlow<-simulatedFlow[date==15.12,]
+	save(routineFlow,file=paste("~/Documents/code/Simulations/data/simulated_sampled_data/routineFlowpart",i,".Rdata",sep=""))
+	rm(simulatedFlow)
+	gc()
+}
 
 #############################################
 ##--------- Event based sampling ----------##
 #############################################
-load("simulatedFlow.Rdata")
-load("simulatedTP.Rdata")
+
 eventData<-list()
 ###Need to convert the Discharge (ML/day) to (m/day), using a rating curve
-ratingCurve<-read.csv("rating_curve.csv",header=T)
+ratingCurve<-read.csv("~/Documents/code/Simulations/data/raw_data/rating_curve.csv",header=T)
 ###Fit a model to the rating curve.
 ratingCurveModel<-smooth.spline(ratingCurve[,2],ratingCurve[,1])
 ###Create a vector of the amount of hours between each sample
 sampleHour<-c(0,3,3,3,6,6,6,6,12,12,12,12)
 
-for(realisation in 1:2500){
-	###Create a height object from the above model
-	streamHeight<-predict(ratingCurveModel,simulatedFlow[,realisation]*(24))$y
-	###Create a vector of 
-	###Create Variables for time of sample, discharge and TP.
-	tempTime<-NA
-	tempFlow<-NA
-	tempTP<-NA
-	###Set the while loop iterator to 2
-	i=1
-	###Now sample the discharge if there is an event.
-	while(i<length(streamHeight)-81){
-		i=i+1
-		##Check to see if the previous hour of stream height was less 1 m and if the current stream height is more than 1 m.
-		if(streamHeight[i-1]<1&&streamHeight[i]>1){
-			##Check to see that the rate of rise is enough to classify this as an event.
-			if(streamHeight[i+1]-streamHeight[i]>0.04*2){
+for(file in 1:10){
+	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/flow/simulatedFlow",file,".Rdata",sep=""))
+	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simulatedTP",file,".Rdata",sep=""))
+	load(paste("~/Documents/code/Simulations/data/simulated_sampled_data/routineFlowpart",file,".Rdata",sep=""))
+	load(paste("~/Documents/code/Simulations/data/simulated_sampled_data/routineTPpart",file,".Rdata",sep=""))
+
+	for(realisation in 1:250){
+		###Create a height object from the above model
+		streamHeight<-predict(ratingCurveModel,simulatedFlow[,realisation]*(24))$y
+		###Create a vector of 
+		###Create Variables for time of sample, discharge and TP.
+		tempTime<-NA
+		tempFlow<-NA
+		tempTP<-NA
+		###Set the while loop iterator to 2
+		i=1
+		###Now sample the discharge if there is an event.
+		while(i<length(streamHeight)-81){
+			i=i+1
+			##Check to see if the previous hour of stream height was less 1 m and if the current stream height is more than 1 m.
+			if(streamHeight[i-1]<1&&streamHeight[i]>1){
+				##Check to see that the rate of rise is enough to classify this as an event.
+				if(streamHeight[i+1]-streamHeight[i]>0.04*2){
 
 
 	##----Now we are within an event.----##
 
 
-				##Set the iterator of the event to 1. This iterator will cycle through the sampleHour
-				j=1
-				while(streamHeight[i]>=1&&j<12){#stream height must be more than 1 m high, and cannot take more than 12 samples.
-					i=i+sampleHour[j] #This makes sure i will be at the right hour of time when we leave the event.
-					####Now save the associated values at each time of the event.
-					tempFlow<-rbind(tempFlow,simulatedFlow[i,realisation])
-					tempTP<-rbind(tempTP,simulatedTP[i,realisation])
-					tempTime<-rbind(tempTime,i)
-					j=j+1
+					##Set the iterator of the event to 1. This iterator will cycle through the sampleHour
+					j=1
+					while(streamHeight[i]>=1&&j<12){#stream height must be more than 1 m high, and cannot take more than 12 samples.
+						i=i+sampleHour[j] #This makes sure i will be at the right hour of time when we leave the event.
+						####Now save the associated values at each time of the event.
+						tempFlow<-rbind(tempFlow,simulatedFlow[i,realisation])
+						tempTP<-rbind(tempTP,simulatedTP[i,realisation])
+						tempTime<-rbind(tempTime,i)
+						j=j+1
+					}
 				}
-			}
-		}	
+			}	
+		}
+
+		###Combine the vectors to one data.frame and remove the first obs, as they are NA's.
+		eventSampled<-data.frame(Time=(tempTime[-1]/24),Flow=tempFlow[-1],TP=tempTP[-1])
+		###From here i am trying to join the routine and the event	
+		tempfinal<-data.frame(Time=routineTime,Flow=routineFlow[,realisation],TP=routineTP[,realisation])
+		tempfinal<-rbind(eventSampled,tempfinal)
+		tempfinal<-tempfinal[order(tempfinal$Time),]
+		eventData[[realisation]]<-tempfinal
+		print(realisation)
 	}
-
-	###Combine the vectors to one data.frame and remove the first obs, as they are NA's.
-	eventSampled<-data.frame(Time=(tempTime[-1]/24),Flow=tempFlow[-1],TP=tempTP[-1])
-	###From here i am trying to join the routine and the event	
-	tempfinal<-data.frame(Time=routineTime,Flow=routineFlow[,realisation],TP=routineTP[,realisation])
-	tempfinal<-rbind(eventSampled,tempfinal)
-	tempfinal<-tempfinal[order(tempfinal$Time),]
-	eventData[[realisation]]<-tempfinal
-	print(realisation)
+	save(eventData,file=paste("~/Documents/code/Simulations/data/simulated_sampled_data/event/eventDatapart",file,".Rdata"))
 }
-save(eventData,file="eventData.Rdata")
 
+###This section doesn't work as all the samples are seperated now.
 ###Lets see how many samples where collected for each realisation.
-temp<-length(eventData[[1]][,1])
-for(i in 2:1410){
-temp<-rbind(temp,length(eventData[[i]][,1]))
-if(temp[i]==2793)print(i)
-}
-hist(temp)
+#temp<-length(eventData[[1]][,1])
+#for(i in 2:1410){
+#temp<-rbind(temp,length(eventData[[i]][,1]))
+#if(temp[i]==2793)print(i)
+#}
+#hist(temp)
 ####So now there is both routine and event-based sampling completed - all that has to be done is to make likfit models of the whole lot.
 
+###This section is old needs rewritting - 9/Aug/2010.
 ################################
-###Create the likfit objects
+###Create the likfit objects####
+################################
 setwd("~/Documents/code/Simulations/")
 load("eventData.Rdata")
 library(geoR)
@@ -612,6 +432,9 @@ save(eventlikfit,file="eventlikfit_part10.Rdata")
 rm(eventlikfit)
 gc()
 
+
+
+setwd("~/Documents/code/Simulations/data/backtransformed_simulations/complete")
 load("simulatedFlow.Rdata")
 temp<-simulatedFlow[,1:250]
 save(temp,file="simflow1.Rdata")
