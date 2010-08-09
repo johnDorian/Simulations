@@ -59,12 +59,11 @@ for(part_no in 1:10){
 
 
 ####And now for the routine dataset.
-
-for(part_no in 1:5){
 adj_part_no=0
+for(part_no in 1:5){
 	for(rep in 1:2){##This for loop is so the 250 realisations of tp and flow are combined to make 500 realisation objects like the same as the length of the routine objects.
 		adj_part_no=adj_part_no+1
-		if(adj_part_no==1){
+		if(adj_part_no%%2==1){
 			load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simtp",adj_part_no,".Rdata",sep=""))
 			tp=temp
 			load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/flow/simflow",adj_part_no,".Rdata",sep=""))
@@ -173,4 +172,103 @@ hist(routineFinalAll[[3]]/1000)
 
 summary(eventFinalAll[[3]]/1000)
 summary(routineFinalAll[[3]]/1000)
+
+plot(eventFinalAll[[3]]/1000)
+plot(routineFinalAll[[3]]/1000)
+
+######################################################
+##################Now I will go through the predicted datasets and find the predicted exceedence frequency and compare it to the observed.
+######################################################
+######################################################
+#length(krig.tp[[31]]$predict[krig.tp[[31]]$predict<0.02])/24
+#if it is a lm it is below else above.
+#length(krig.tp[[1]]$mean[krig.tp[[1]]$mean>0.02])/24
+#below is for the actual results
+#length(temp[temp<0.02]/24)
+
+
+#Then i also need to use the sca method. % of collected samples above the guidelines.
+act.days<-matrix(NA,ncol=2500,nrow=20)
+overall.realisation=0
+for(part_no in 1:10){
+	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simtp",part_no,".Rdata",sep=""))
+	for(realisation in 1:250){
+		tp<-matrix(temp[,realisation],ncol=20)
+		overall.realisation=overall.realisation+1
+		for(year in 1:20){	
+			act.days[year,overall.realisation]<-length(tp[tp[,year]>0.02,year])/24
+		}
+	}
+}
+load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simtp5.Rdata",sep=""))
+tp5=temp
+load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simtp7.Rdata",sep=""))
+tp7=temp
+load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simtp6.Rdata",sep=""))
+tp6=temp
+load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simtp8.Rdata",sep=""))
+tp8=temp
+
+
+
+for(i in 1:2250){
+	if(cor(act.days[,i],act.days[,i+500])==1)print(i)
+	}
+###Event-based days above in each year of each realisation - of the entire 2500 realisations.
+pred.days<-matrix(NA,ncol=2500,nrow=20)
+final=0
+for(part_no in 1:10){
+	for(file in 1:25){
+##load the kriged data for the next ten realisations
+		load(paste("~/Documents/code/Simulations/predicted/event/part",part_no,"/krigtp_part",part_no,"_subpart",file*10,".Rdata",sep=""))
+		krig.counter=0
+		for(realisation in 1:10){
+			final=final+1
+			for(i in 1:20){
+				krig.counter=krig.counter+1
+###predict must be changed for what ever the predicted object name actually is.
+				pred.days[i,final]<-length(krig.tp[[krig.counter]]$predict[krig.tp[[krig.counter]]$predict>0.02])/24
+			}
+		}
+	}
+}
+
+
+routine.days<-matrix(NA,ncol=2500,nrow=20)
+final=0
+for(part_no in 1:5){
+	for(file in 1:50){
+##load the kriged data for the next ten realisations
+		load(paste("~/Documents/code/Simulations/predicted/routine/part",part_no,"/routine_predicted_",part_no,"_subpart",file*10,".Rdata",sep=""))
+		krig.counter=0
+		for(realisation in 1:10){
+			final=final+1
+			for(i in 1:20){
+				krig.counter=krig.counter+1
+###predict must be changed for what ever the predicted object name actually is.
+				if(class(krig.tp[[krig.counter]])=="kriging"){
+					routine.days[i,final]<-length(krig.tp[[krig.counter]]$predict[krig.tp[[krig.counter]]$predict>0.02])/24
+				} else {
+					routine.days[i,final]<-length(krig.tp[[krig.counter]]$mean[krig.tp[[krig.counter]]$mean>0.02])/24
+				}
+			}
+		}
+	}
+}
+
+####RMSE time
+rmse <- function(obs, pred) sqrt(mean((obs-pred)^2))
+rmse.event.results<-matrix(NA,ncol=1,nrow=2500)
+for(i in 1:2500){
+	rmse.event.results[i,1]<-rmse(act.days[,i],pred.days[,i])
+}
+
+rmse.routine.results<-matrix(NA,ncol=1,nrow=2500)
+for(i in 1:2500){
+	rmse.routine.results[i,1]<-rmse(act.days[,i],routine.days[,i])
+}
+
+
+plot(rmse.routine.results)
+points(rmse.event.results,col="red")
 
