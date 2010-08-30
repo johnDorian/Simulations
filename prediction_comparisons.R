@@ -90,6 +90,11 @@ save(rmse.results,file="averageAbovehoursRMSE.Rdata")
 
 library (geoR)
 
+annual.load<-matrix(NA,ncol=2500,nrow=20)
+annual.tp<-matrix(NA,ncol=2500,nrow=20)
+annual.flow<-matrix(NA,ncol=2500,nrow=20)
+routine.tp<-matrix(NA,ncol=2500,nrow=20)
+event.tp<-matrix(NA,ncol=2500,nrow=20)
 
 for (part_no in 1:10){
 	###Load the tp and flow data (complete simulated)
@@ -98,19 +103,15 @@ for (part_no in 1:10){
 	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/flow/simulatedFlow",part_no,".Rdata",sep=""))
 
 	###Cycle through the 250 realisations of the simulated data and get the annual load
-	annual.load<-matrix(NA,ncol=2500,nrow=20)
-	annual.tp<-matrix(NA,ncol=2500,nrow=20)
-	annual.flow<-matrix(NA,ncol=2500,nrow=20)
-	routine.tp<-matrix(NA,ncol=2500,nrow=20)
-	event.tp<-matrix(NA,ncol=2500,nrow=20)
+
 
 	for (subpart in 1:250){
 		###Get the annual tp (concentration) amount for the year
 		real.<-(part_no-1)*250+subpart #Get the actual relisation number (1:2500)
-		tp.real<-matrix(simulatedTP[,real.],ncol=20)
+		tp.real<-matrix(simulatedTP[,subpart],ncol=20)
 		annual.tp[,real.]<-colSums(tp.real)
 		###Now annual flow
-		flow.real<-matrix(simulatedFlow[,real.],ncol=20)
+		flow.real<-matrix(simulatedFlow[,subpart],ncol=20)
 		annual.flow[,real.]<-colSums(flow.real)
 		
 		####Now for the predicted stuff
@@ -124,57 +125,40 @@ for (part_no in 1:10){
 		}
 		cat("subpart ",subpart,"\n")
 	}
-	cat("part",part,"\n")
+	cat("part",part_no,"\n")
 }
 
 
+annual.load<-annual.tp*annual.flow
+event.tp<-event.tp*annual.flow
+routine.tp<-routine.tp*annual.flow
 
-
-
-
-
-
-	
-	###Create a matrix for predicted load 
-	event.load<-matrix(NA,ncol=250,nrow=20)
-	final=0
-		for (subpart in 1:250){
-##load the kriged data for the next ten realisations
-			load(paste("~/Documents/code/Simulations/predicted/event/part",part_no,"/krigtp_part",part_no,"_subpart",subpart,".Rdata",sep=""))
-			###Seperate the simulated flow into years for this realisation
-			flow.year<-matrix(simulatedFlow[,subpart],ncol=20)
-			#krig.counter=0 #relec from previous methods...
-			
-			for (i in 1:20){
-					#krig.counter=krig.counter+1 #relec from previous methods...
-###predict must be changed for what ever the predicted object name actually is.
-					event.load[i,final]<-sum(flow.year[,i]*krig.tp[[krig.counter]]$predict)
-				}
-			}
-		}
-				
-###Now we have two matrixs with annual load sums, 250 cols (for each realisation) and 20 rows (for each year of each realisation).
-	rmse <- function(obs, pred) sqrt(mean((obs-pred)^2))
-	temp<-NA
-	for(i in 1:250){
-		temp<-rbind(temp,rmse(annual.load[,i],pred.load[,i]))
-	}
-	temp<-temp[-1,]
-#	hist(temp)
-
-	eventFinal<-list()
-	eventFinal[["ActualAnnualLoad"]]<-annual.load
-	eventFinal[["PredictedAnnualLoad"]]<-pred.load
-	eventFinal[["RMSE"]]<-as.numeric(temp)
-
-	save(eventFinal,file=paste("~/Documents/code/Simulations/temp_results/eventfinal_part",part_no,".Rdata",sep=""))
+###Now the rmse's
+rmse.results<-matrix(NA,ncol=2,nrow=2500)
+rmse <- function(obs, pred) sqrt(mean((obs-pred)^2))
+for (i in 1:2500){
+rmse.results[i,1]<-rmse(annual.load[,i],event.tp[,i])
+rmse.results[i,2]<-rmse(annual.load[,i],routine.tp[,i])
 }
 
+averageLoad<-data.frame(actual=colSums(annual.load)/1000000/20,event=colSums(event.tp)/1000000/20,routine=colSums(routine.tp)/1000000/20)
+pdf("bplot_ave_load.pdf")
+boxplot(averageLoad,main="Average annual load per realisation",xlab="sample",ylab="average annual load (kg) per realisation")
+dev.off()
+
+pdf("RMSE_load_dots.pdf")
+re<-rgb(red=255,blue=0,green=0,max=255,alpha=120)
+bla<-rgb(red=0,blue=0,green=0,max=255,alpha=120)
+ylim=c(0,300)
+plot(rmse.results[,1]/1000000,ylab="RMSE (kg/year)",xlab="Realisation",ylim=ylim,pch=16,col=bla,main="RMSE of each realisation (annual load)")
+points(rmse.results[,2]/1000000,col=re,pch=16)
+legend("topleft",c("Event","routine"),col=c(bla,re),pch=16,bg="white")
+dev.off()
 
 
+#1871
 
-
-
+load("~/Documents/code/Simulations/models/event/part7/eventlikfit_part_7_subpart_121.Rdata")
 
 
 
