@@ -95,35 +95,60 @@ for (part_no in 1:10){
 	###Load the tp and flow data (complete simulated)
 	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/tp/simulatedTP",part_no,".Rdata",sep=""))
 
-	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/flow/simflow",part_no,".Rdata",sep=""))
-	###Calulate the load
-	load<-simulatedTP*simulatedFlow
-	###remove the tp - don't need it anymore
-	rm(simulatedTP)
-	gc()
+	load(paste("~/Documents/code/Simulations/data/backtransformed_simulations/parts/flow/simulatedFlow",part_no,".Rdata",sep=""))
+
 	###Cycle through the 250 realisations of the simulated data and get the annual load
-	annual.load<-matrix(NA,ncol=250,nrow=20)
-	for(i in 1:250){
-		real.load<-matrix(load[,i],ncol=20)
-		real.load<-colSums(real.load)
-		annual.load[,i]<-real.load
+	annual.load<-matrix(NA,ncol=2500,nrow=20)
+	annual.tp<-matrix(NA,ncol=2500,nrow=20)
+	annual.flow<-matrix(NA,ncol=2500,nrow=20)
+	routine.tp<-matrix(NA,ncol=2500,nrow=20)
+	event.tp<-matrix(NA,ncol=2500,nrow=20)
+
+	for (subpart in 1:250){
+		###Get the annual tp (concentration) amount for the year
+		real.<-(part_no-1)*250+subpart #Get the actual relisation number (1:2500)
+		tp.real<-matrix(simulatedTP[,real.],ncol=20)
+		annual.tp[,real.]<-colSums(tp.real)
+		###Now annual flow
+		flow.real<-matrix(simulatedFlow[,real.],ncol=20)
+		annual.flow[,real.]<-colSums(flow.real)
+		
+		####Now for the predicted stuff
+		load(paste("~/Documents/code/Simulations/predicted/event/part",part_no,"/krigtp_part",part_no,"_subpart",subpart,".Rdata",sep=""))
+		event.krig<-krig.tp
+		load(paste("~/Documents/code/Simulations/predicted/routine/part",part_no,"/krigtp_",part_no,"_subpart",subpart,".Rdata",sep=""))
+		routine.krig<-krig.tp
+		for (year in 1:20){
+			routine.tp[year,real.]<-sum(routine.krig[[year]][[1]])
+			event.tp[year,real.]<-sum(event.krig[[year]][[1]])
+		}
+		cat("subpart ",subpart,"\n")
 	}
+	cat("part",part,"\n")
+}
+
+
+
+
+
+
+
 
 	
 	###Create a matrix for predicted load 
-	pred.load<-matrix(NA,ncol=250,nrow=20)
+	event.load<-matrix(NA,ncol=250,nrow=20)
 	final=0
 		for (subpart in 1:250){
 ##load the kriged data for the next ten realisations
 			load(paste("~/Documents/code/Simulations/predicted/event/part",part_no,"/krigtp_part",part_no,"_subpart",subpart,".Rdata",sep=""))
-			krig.counter=0
-			for (realisation in 1:10){
-				final=final+1
-				flow.year<-matrix(flow[,final],ncol=20)
-				for(i in 1:20){
-					krig.counter=krig.counter+1
+			###Seperate the simulated flow into years for this realisation
+			flow.year<-matrix(simulatedFlow[,subpart],ncol=20)
+			#krig.counter=0 #relec from previous methods...
+			
+			for (i in 1:20){
+					#krig.counter=krig.counter+1 #relec from previous methods...
 ###predict must be changed for what ever the predicted object name actually is.
-					pred.load[i,final]<-sum(flow.year[,i]*krig.tp[[krig.counter]]$predict)
+					event.load[i,final]<-sum(flow.year[,i]*krig.tp[[krig.counter]]$predict)
 				}
 			}
 		}
