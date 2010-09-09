@@ -604,8 +604,18 @@ length(real)
 ######################################################
 
 seq<-1:2500
-n<-100
+n<-250
 random.cols<-sample(x=seq,size=n,replace=FALSE)
+sort(random.cols)
+breaks<-seq(0,2500,by=250)
+real.<-list()
+for(i in 1:(length(breaks)-1)){
+	real.[[i]]<-sort(random.cols[random.cols<breaks[i+1]& random.cols>breaks[i]])
+}
+	
+
+
+
 
 setwd("~/Documents/code/Simulations/")
 load("simulatedFlow.Rdata")
