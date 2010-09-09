@@ -32,11 +32,11 @@ for(i in 1:10){
 ### Create A gstat object with TP and flow.
 		g = gstat(NULL, "TP", TP ~ 1,spdf,maxdist=200,dummy=TRUE,beta=mean(data$TP))
 		g = gstat(g, "FLOW", FLOW ~ 1,spdf,maxdist=200,dummy=TRUE,beta=mean(data$FLOW))
-		small.gstat[[i]] = variogram(g,cutoff=150,width=10)
+		small.gstat[[output]] = variogram(g,cutoff=150,width=10)
 		print(output)
 		output=output+1
 	}
 }
-
+small.gstat[[output]]<-real.
 save(small.gstat,file="sim_subset_gstat_validation.Rdata")
 ###Now to have a look at the results
