@@ -602,56 +602,46 @@ length(real)
 ##### now look at how close the simulations are ######
 ##### by doing lmcr's of the simulated data ##########
 ######################################################
-
+setwd("~?Documents/code/Simulations")
+###Create a seq to represent the realisations
 seq<-1:2500
+#how many samples to take from the population
 n<-250
+###Sample the realisation
 random.cols<-sample(x=seq,size=n,replace=FALSE)
-sort(random.cols)
+##Create a seq. to seperate the samples for each file
 breaks<-seq(0,2500,by=250)
+##Create a list and seperate each file realisations out. and modify the value so it represents the subpart of the file.
 real.<-list()
 for(i in 1:(length(breaks)-1)){
-	real.[[i]]<-sort(random.cols[random.cols<breaks[i+1]& random.cols>breaks[i]])
+	real.[[i]]<-sort(random.cols[random.cols<breaks[i+1]& random.cols>breaks[i]]%%250)
 }
-	
-
-
-
-
-setwd("~/Documents/code/Simulations/")
-load("simulatedFlow.Rdata")
-smallFlow<-simulatedFlow[,random.cols]
-rm(simulatedFlow)
-gc()
-load("simulatedTP.Rdata")
-smallTP<-simulatedTP[,random.cols]
-rm(simulatedTP)
-gc()
-
-
 
 ### Load the gstat library
-library(gstat);library(TeachingDemos);library(geoR)
+library(gstat);library(geoR)
 sim=24*365*20
 date=(seq(1,sim)-1)*0.04166667
 small.gstat<-list()
-for(i in 1:100){
-	data <- data.frame(X=date,Y=1,TP=smallTP[,i],FLOW=smallFlow[,i])
-	flow.lambda <- boxcox.fit(data$FLOW+0.001)$lambda
-	tp.lambda <- boxcox.fit(data$TP+0.001)$lambda
-### Transform the data the boxcox formula.
-	data$TP <- ((data$TP+0.001)^tp.lambda-1)/tp.lambda
-	data$FLOW <- ((data$FLOW+0.001)^flow.lambda-1)/flow.lambda
+	
+output=1
+
+for(i in 1:10){
+	load(paste("data/simulated_raw/simtp/simtp",i,".Rdata",sep=""))#sim.tp
+	load(paste("data/simulated_raw/simflow/simflow",i,".Rdata",sep=""))#sim.flow
+
+	for(it in 1:length(real.[[i]])){
+		data <- data.frame(X=date,Y=1,TP=sim.tp[,real.[[i]]][it],FLOW=sim.flow[,real.[[i]]][it])
 ### Create gstat object of the data
-	spdf <- SpatialPointsDataFrame(data[,1:2],data)
+		spdf <- SpatialPointsDataFrame(data[,1:2],data)
 ### Create A gstat object with TP and flow.
-	g = gstat(NULL, "TP", TP ~ 1,spdf,maxdist=200,dummy=TRUE,beta=mean(data$TP))
-	g = gstat(g, "FLOW", FLOW ~ 1,spdf,maxdist=200,dummy=TRUE,beta=mean(data$FLOW))
-
-
-### Create cross and auto variograms of the gstat object, using width to set the bins.
-	small.gstat[[i]] = variogram(g,cutoff=150,width=10)
-print(i)
+		g = gstat(NULL, "TP", TP ~ 1,spdf,maxdist=200,dummy=TRUE,beta=mean(data$TP))
+		g = gstat(g, "FLOW", FLOW ~ 1,spdf,maxdist=200,dummy=TRUE,beta=mean(data$FLOW))
+		small.gstat[[output]] = variogram(g,cutoff=150,width=10)
+		print(output)
+		output=output+1
+	}
 }
+
 save(small.gstat,file="sim_subset_gstat_validation.Rdata")
 ###Now to have a look at the results
 results<-matrix(rep(NA,45*100),ncol=100)
