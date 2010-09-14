@@ -26,7 +26,7 @@ for(i in 1:10){
 	load(paste("data/simulated_raw/simflow/simflow",i,".Rdata",sep=""))#sim.flow
 
 	for(it in 1:length(real.[[i]])){
-		data <- data.frame(X=date,Y=1,TP=sim.tp[,real.[[i]]][it],FLOW=sim.flow[,real.[[i]]][it])
+		data <- data.frame(X=date,Y=1,TP=sim.tp[,real.[[i]][it]],FLOW=sim.flow[,real.[[i]][it]])
 ### Create gstat object of the data
 		spdf <- SpatialPointsDataFrame(data[,1:2],data)
 ### Create A gstat object with TP and flow.
@@ -40,3 +40,9 @@ for(i in 1:10){
 small.gstat[[output]]<-real.
 save(small.gstat,file="sim_subset_gstat_validation.Rdata")
 ###Now to have a look at the results
+
+###Now let's look at the results if the variograms.
+load('~/Documents/code/Simulations/sim_subset_gstat_validation.Rdata')
+temp<-small.gstat[-248]
+test1<-do.call(cbind,temp)
+
