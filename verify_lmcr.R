@@ -10,8 +10,11 @@ breaks<-seq(0,2500,by=250)
 ##Create a list and seperate each file realisations out. and modify the value so it represents the subpart of the file.
 real.<-list()
 for(i in 1:(length(breaks)-1)){
-	real.[[i]]<-sort(random.cols[random.cols<breaks[i+1]& random.cols>breaks[i]]%%250)
+	real.[[i]]<-sort(random.cols[random.cols<=breaks[i+1]& random.cols>breaks[i]]%%250)
 }
+
+###Make sure the the amount of realisations to do is the same as what was requested.
+if (sum(do.call(cbind,lapply(real.,length)))!=n) stop("Error in code")
 
 ### Load the gstat library
 library(gstat);library(geoR)
@@ -43,6 +46,5 @@ save(small.gstat,file="sim_subset_gstat_validation.Rdata")
 
 ###Now let's look at the results if the variograms.
 load('~/Documents/code/Simulations/sim_subset_gstat_validation.Rdata')
-temp<-small.gstat[-248]
 test1<-do.call(cbind,temp)
-
+names(test1[,seq(3,length(test1),by=6)])
