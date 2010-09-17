@@ -2,7 +2,7 @@ setwd("~/Documents/code/Simulations")
 ###Create a seq to represent the realisations
 seq<-1:2500
 #how many samples to take from the population
-n<-250
+n<-150
 ###Sample the realisation
 random.cols<-sample(x=seq,size=n,replace=FALSE)
 ##Create a seq. to seperate the samples for each file
@@ -39,9 +39,10 @@ for(i in 1:10){
 		print(output)
 		output=output+1
 	}
+	small.gstat[[output]]<-real.
+	save(small.gstat,file="sim_subset_gstat_validation.Rdata")
 }
-small.gstat[[output]]<-real.
-save(small.gstat,file="sim_subset_gstat_validation.Rdata")
+
 ###Now to have a look at the results
 
 ###Now let's look at the results if the variograms.
