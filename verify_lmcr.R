@@ -45,7 +45,23 @@ for(i in 1:10){
 
 ###Now to have a look at the results
 
-###Now let's look at the results if the variograms.
-load('~/Documents/code/Simulations/sim_subset_gstat_validation.Rdata')
-test1<-do.call(cbind,temp)
-names(test1[,seq(3,length(test1),by=6)])
+###Now let's look at the results of the variograms.
+#TODO: fix the next bit up. Make a nice plotting fuinction for lmcr, for verification and the actual modeled data.
+#load('~/Documents/code/Simulations/sim_subset_gstat_validation.Rdata')
+#test1<-do.call(cbind,small.gstat[-248])
+#gamma<-test1[,seq(3,length(test1),by=6)]
+#mean.gamma<-apply(gamma,1,mean)
+#sd.gamma<-apply(gamma,1,sd)
+#n<-length(gamma[1,])
+#error <- qnorm(0.975)*sd.gamma/sqrt(n)
+#lower <- mean.gamma-error
+#upper <- mean.gamma+error
+
+
+#mean.gamma<-matrix(mean.gamma,nrow=15)
+#lower<-matrix(lower,nrow=15)
+#upper<-matrix(upper,nrow=15)
+
+#plot(
+
+
